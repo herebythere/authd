@@ -17,6 +17,7 @@ pub struct DangerousActionKind {
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct DangerousAction {
     pub id: u64,
+    pub organization_id: Option<u64>,
     pub people_id: Option<u64>,
     pub token: u64,
     pub dangerous_action_kind_id: u64,
@@ -24,3 +25,11 @@ pub struct DangerousAction {
     pub contact_content: String,
     pub deleted_at: Option<u64>,
 }
+
+
+/*
+    rate limit
+        invite
+        password reset
+        
+*/

@@ -10,8 +10,8 @@ pub struct ContactKind {
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct Contact {
     pub id: u64,
-    pub people_id: u64,
     pub organization_id: u64,
+    pub people_id: u64,
     pub contact_kind_id: u64,
     pub content: String,
     pub deleted_at: Option<u64>,

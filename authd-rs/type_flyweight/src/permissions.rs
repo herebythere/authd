@@ -1,13 +1,9 @@
-// Permissions to edit:
-// 0 Administrator
-// 1 People
-// 2 Contacts
-// 3 TOTP
-// 4 Sessions
-// 5 Dangerous Actions
+// 0 Administrator - can add more admins or maintainers, includes Maintainer permissions
+// 1 Maintainer - can update organization states
 
-// only for people with organization=authd
-// can this person from authd modify this organization
+
+// This is ONLY for admin permissions
+// Can this user delete orgs? delete users? delete sessions?
 
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +17,7 @@ pub struct PermissionKind {
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct Permissions {
     pub id: u64,
-    pub role_kind_id: u64,
-    pub patron_id: u64,
+    pub people_id: u64,
+    pub permission_kind_id: u64,
     pub deleted_at: Option<u64>,
 }
