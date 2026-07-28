@@ -4,6 +4,6 @@ use serde::{Deserialize, Serialize};
 pub struct Organization {
     pub id: u64,
     pub title: String,
-	pub updated_at: u64,
+    pub updated_at: u64,
     pub deleted_at: Option<u64>,
 }

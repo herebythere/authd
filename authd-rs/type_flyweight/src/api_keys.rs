@@ -7,5 +7,6 @@ pub struct ApiKey {
     pub people_id: u64,
     pub key: String,
     pub title: String,
+    pub lifetime: u64,
     pub deleted_at: Option<u64>,
 }

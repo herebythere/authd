@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Person {
     pub id: u64,
     pub organization_id: u64,
+    pub internal: bool,
     pub password_hash_results: String,
     pub updated_at: u64,
     pub deleted_at: Option<u64>,
