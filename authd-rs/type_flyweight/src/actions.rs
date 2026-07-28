@@ -1,14 +1,25 @@
 use serde::{Deserialize, Serialize};
 
 /*
-    Need token:
+    create account
+    login
+    passwordless_login
+    incorrect_login
+    create_invite
+    create_api_key
+    update password
+    logout
+
+
+
+    Need ticket:
         create_contact
         create_session
         update_password
         passwordless_sign_on
         create_api_key
 
-    Does not need token:
+    Does not need ticket:
         login rate limit
         ip_address rate limit
         api_access rate limit
