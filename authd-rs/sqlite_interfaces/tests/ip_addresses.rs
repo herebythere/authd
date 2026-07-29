@@ -31,50 +31,52 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e.into()),
     };
 
-    println!("{:?}", ip_address);
+    let ip_address_updated = match ip_addresses::upsert(
+        &mut conn,
+        &UpsertParams {
+            organization_id: 0,
+            ip_address: "127.0.0.1".to_string(),
+            current_timestamp: 8,
+            window_length_ms: 10,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
 
-    // // read by title
-    // let read_organization = match ip_addresses::read(&mut conn, "sqlite_tests") {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e.into()),
-    // };
+    assert!(ip_address_updated.window_count == ip_address.window_count + 1);
 
-    // assert!(Some(organization.clone()) == read_organization);
+    let ip_address_updated_again = match ip_addresses::upsert(
+        &mut conn,
+        &UpsertParams {
+            organization_id: 0,
+            ip_address: "127.0.0.1".to_string(),
+            current_timestamp: 16,
+            window_length_ms: 10,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
 
-    // // read by id
-    // let read_organization_by_id = match ip_addresses::read_by_id(&mut conn, 0) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e.into()),
-    // };
+    assert!(ip_address_updated_again.window_count == 1);
+    assert!(ip_address_updated_again.prev_window_count == 2);
 
-    // assert!(Some(organization.clone()) == read_organization_by_id);
+    let ip_address_new_window = match ip_addresses::upsert(
+        &mut conn,
+        &UpsertParams {
+            organization_id: 0,
+            ip_address: "127.0.0.1".to_string(),
+            current_timestamp: 37,
+            window_length_ms: 10,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
 
-    // // soft delete
-    // let delete_organization = match ip_addresses::delete(
-    //     &mut conn,
-    //     &DeleteParams {
-    //         id: 0,
-    //         current_timestamp: 10,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e.into()),
-    // };
-
-    // println!("{:?}, {:?}", &organization, &delete_organization);
-
-    // match delete_organization {
-    //     Some(delete_org) => {
-    //         assert!(organization.id == delete_org.id);
-    //         assert!(delete_org.deleted_at != None);
-    //     }
-    //     _ => assert!(false, "None returned after delete organization"),
-    // }
-
-    // assert!(Some(organization) == read_organization_by_id);
-
-    // id == id
-    // deleted_at == ?
+    assert!(ip_address_new_window.window_count == 1);
+    assert!(ip_address_new_window.prev_window_count == 0);
 
     Ok(())
 }
