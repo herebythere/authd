@@ -1,24 +1,27 @@
 use rusqlite::{Connection, Error as RusqliteError, Result, Row};
-use type_flyweight::organizations::Organization;
+use type_flyweight::ip_addresses::IpAddressRateLimit;
 
 use crate::errors::SqliteInterfaceError;
 
-fn get_entry_from_row(row: &Row) -> Result<Organization, RusqliteError> {
-    Ok(Organization {
-        id: row.get(0)?,
-        title: row.get(1)?,
-        updated_at: row.get(2)?,
-        deleted_at: row.get(3)?,
+fn get_entry_from_row(row: &Row) -> Result<IpAddressRateLimit, RusqliteError> {
+    Ok(IpAddressRateLimit {
+        organization_id: row.get(0)?,
+        ip_address: row.get(1)?,
+        prev_window_count: row.get(2)?,
+        window_count: row.get(3)?,
+        updated_at: row.get(4)?,
     })
 }
 
 pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
     let results = conn.execute(
-        "CREATE TABLE IF NOT EXISTS organizations (
-            id INTEGER PRIMARY KEY,
-            title TEXT NOT NULL,
+        "CREATE TABLE IF NOT EXISTS ip_addresses (
+            organization_id INTEGER NOT NULL,
+            ip_address TEXT NOT NULL,
+			prev_window_count INTEGER NOT NULL,
+			window_count INTEGER NOT NULL,
 			updated_at INTEGER NOT NULL,
-            deleted_at INTEGER
+			PRIMARY KEY (organization_id, ip_address)
         )",
         (),
     );
@@ -30,22 +33,43 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
     Ok(())
 }
 
-pub struct CreateParams {
-    pub id: i64,
-    pub title: String,
+pub struct UpsertParams {
+    pub organization_id: i64,
+    pub window_length_ms: i64,
+    pub ip_address: String,
     pub current_timestamp: i64,
 }
 
-pub fn create(
+// INSERT INTO users(username,score) VALUES('Johnny', 388)
+// ON CONFLICT(username) DO UPDATE SET score = '388';
+pub fn upsert(
     conn: &mut Connection,
-    params: &CreateParams,
-) -> Result<Organization, SqliteInterfaceError> {
+    params: &UpsertParams,
+) -> Result<IpAddressRateLimit, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        INSERT INTO organizations
-            (id, title, updated_at)
+        INSERT INTO ip_addresses
+            (organization_id, ip_address, prev_window_count, window_count, updated_at)
         VALUES
-            (?1, ?2, ?3)
+            (?1, ?2, 0, 1, ?3)
+		ON CONFLICT(organization_id, ip_address) DO UPDATE
+            SET
+                window_count =
+                    CASE
+                        WHEN ?4 < (?3 - updated_at) THEN 1
+                        ELSE window_count + 1
+                    END,
+                prev_window_count =
+                    CASE
+                        WHEN (2 * ?4) < (?3 - updated_at) THEN 0
+                        WHEN ?4 < (?3 - updated_at) THEN window_count 
+                        ELSE prev_window_count
+                    END,
+                updated_at =
+                    CASE
+                        WHEN ?4 < (?3 - updated_at) THEN ?3
+                        ELSE updated_at
+                    END
         RETURNING
             *
     ",
@@ -55,7 +79,12 @@ pub fn create(
     };
 
     let mut entry_iter = match stmt.query_map(
-        (params.id, params.title.clone(), params.current_timestamp),
+        (
+            params.organization_id,
+            params.ip_address.clone(),
+            params.current_timestamp,
+            params.window_length_ms,
+        ),
         get_entry_from_row,
     ) {
         Ok(entry_iter) => entry_iter,
@@ -76,13 +105,13 @@ pub fn create(
 pub fn read_by_id(
     conn: &mut Connection,
     id: i64,
-) -> Result<Option<Organization>, SqliteInterfaceError> {
+) -> Result<Option<IpAddressRateLimit>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT
             *
         FROM
-            organizations
+            ip_addresses
         WHERE
 			deleted_at IS NULL
             AND
@@ -110,13 +139,13 @@ pub fn read_by_id(
 pub fn read(
     conn: &mut Connection,
     title: &str,
-) -> Result<Option<Organization>, SqliteInterfaceError> {
+) -> Result<Option<IpAddressRateLimit>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT
             *
         FROM
-            organizations
+            ip_addresses
         WHERE
             deleted_at IS NULL
             AND
@@ -142,11 +171,6 @@ pub fn read(
 }
 
 // update
-pub struct PatchParams {
-    pub id: i64,
-    pub title: String,
-    pub current_timestamp: i64,
-}
 
 // soft delete
 pub struct DeleteParams {
@@ -157,10 +181,10 @@ pub struct DeleteParams {
 pub fn delete(
     conn: &mut Connection,
     params: &DeleteParams,
-) -> Result<Option<Organization>, SqliteInterfaceError> {
+) -> Result<Option<IpAddressRateLimit>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        UPDATE OR IGNORE organizations
+        UPDATE OR IGNORE ip_addresses
             SET deleted_at = ?1
             WHERE id = ?2
         RETURNING

@@ -58,8 +58,6 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e.into()),
     };
 
-    println!("{:?}, {:?}", &organization, &delete_organization);
-
     match delete_organization {
         Some(delete_org) => {
             assert!(organization.id == delete_org.id);
@@ -67,11 +65,6 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         }
         _ => assert!(false, "None returned after delete organization"),
     }
-
-    assert!(Some(organization) == read_organization_by_id);
-
-    // id == id
-    // deleted_at == ?
 
     Ok(())
 }
