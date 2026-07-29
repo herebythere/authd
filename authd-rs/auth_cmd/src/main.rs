@@ -16,3 +16,9 @@ authd upkeep (keep db smol)
 	- Delete stale entries
 	- Delete soft-deleted entries
 */
+
+fn main() {
+	let args: Vec<String> = env::args().collect();
+
+	
+}

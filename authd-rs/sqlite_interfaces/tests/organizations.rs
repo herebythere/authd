@@ -1,35 +1,77 @@
 use rusqlite::{Connection, Result};
-use sqlite_interfaces::oganizations;
+use sqlite_interfaces::organizations;
+use sqlite_interfaces::organizations::{CreateParams, DeleteParams};
+
+use sqlite_interfaces::errors::SqliteInterfaceError;
+
+// Box<dyn std::error::Error>
 
 #[test]
-fn crud_operations() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = Connection::open_in_memory()?;
+fn crud_operations() -> Result<(), SqliteInterfaceError> {
+    let mut conn = match Connection::open_in_memory() {
+        Ok(conn) => conn,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
 
-    if let Err(_e) = oganizations::create_table(&mut conn) {
-        assert!(false, "failed to create oganizations table");
+    if let Err(_e) = organizations::create_table(&mut conn) {
+        assert!(false, "failed to create organizations table");
     }
 
     // create
-    let contact_kind = match oganizations::create(&mut conn, 1, "email") {
+    let organization = match organizations::create(
+        &mut conn,
+        &CreateParams {
+            id: 0,
+            title: "sqlite_tests".to_string(),
+            current_timestamp: 5,
+        },
+    ) {
         Ok(ck) => ck,
         Err(e) => return Err(e.into()),
     };
+
+    // read by title
+    let read_organization = match organizations::read(&mut conn, "sqlite_tests") {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    assert!(Some(organization.clone()) == read_organization);
 
     // read by id
-    let contact_kind_read_by_id = match oganizations::read(&mut conn, 1) {
+    let read_organization_by_id = match organizations::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
         Err(e) => return Err(e.into()),
     };
 
-    assert!(Some(contact_kind.clone()) == contact_kind_read_by_id);
+    assert!(Some(organization.clone()) == read_organization_by_id);
 
-    // read by kind
-    let contact_kind_read_by_kind = match oganizations::read_by_kind(&mut conn, "email") {
+    // soft delete
+    let delete_organization = match organizations::delete(
+        &mut conn,
+        &DeleteParams {
+            id: 0,
+            current_timestamp: 10,
+        },
+    ) {
         Ok(ck) => ck,
         Err(e) => return Err(e.into()),
     };
 
-    assert!(Some(contact_kind) == contact_kind_read_by_kind);
+    println!("{:?}, {:?}", &organization, &delete_organization);
+
+    match delete_organization {
+        Some(delete_org) => {
+            assert!(organization.id == delete_org.id);
+            assert!(delete_org.deleted_at != None);
+        }
+        _ => assert!(false, "None returned after delete organization"),
+    }
+
+    assert!(Some(organization) == read_organization_by_id);
+
+    // id == id
+    // deleted_at == ?
 
     Ok(())
 }
