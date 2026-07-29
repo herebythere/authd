@@ -15,7 +15,7 @@
 	number values
 		organization kind window_ms updated_at deleted_at
 
-		start_time_ms
+		origin_time_ms
 		session_staleness
 		passwordless_login_staleness
 		reset_password_staleness
@@ -36,6 +36,15 @@ pub struct RateLimitSettings {
     pub updated_at: u64,
     pub deleted_at: Option<u64>,
 }
+
+// "multi_factor_enabled: 1, anything but zero"
+// session length
+// public session length
+// password min length
+// password max length
+// password requires numbers
+// password requires letters
+// password reqeuires special symbol
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct NumberSettings {

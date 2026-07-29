@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
     incorrect_login
     create_invite
     create_api_key
+    access_api
+    crawler_404
     update password
     logout
 
@@ -49,7 +51,7 @@ pub struct ActionTicket {
 
 // dangerous rate limit?
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
-pub struct DangerousActionRateLimit {
+pub struct ActionTicketRateLimit {
     pub id: u64,
     pub people_id: Option<u64>,
     pub dangerous_action_kind_id: String,

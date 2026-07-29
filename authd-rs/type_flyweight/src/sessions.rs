@@ -18,6 +18,8 @@ pub struct PublicSession {
     pub organization_id: u64,
     pub people_id: u64,
     pub token: u64,
+    pub session_id: u64,
+    pub session_token: u64,
     pub prev_window_count: u64,
     pub window_count: u64,
     pub updated_at: u64,
