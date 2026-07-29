@@ -73,6 +73,10 @@ pub fn create(
     ))
 }
 
+// read by title
+// paginated read
+// patch
+
 pub fn read_by_id(
     conn: &mut Connection,
     id: i64,
@@ -146,6 +150,47 @@ pub struct PatchParams {
     pub id: i64,
     pub title: String,
     pub current_timestamp: i64,
+}
+
+pub fn patch(
+    conn: &mut Connection,
+    params: &PatchParams,
+) -> Result<Option<Organization>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        UPDATE OR IGNORE organizations
+            SET
+                title = ?1,
+                updated_at = ?2
+            WHERE
+                deleted_at IS NULL
+                AND
+                id = ?3
+        RETURNING
+            *
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => {
+            return Err(SqliteInterfaceError::Rusqlite(e));
+        }
+    };
+
+    let mut entry_iter = match stmt.query_map(
+        (params.title.clone(), params.current_timestamp, params.id),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    if let Some(entry_maybe) = entry_iter.next() {
+        if let Ok(entry) = entry_maybe {
+            return Ok(Some(entry));
+        }
+    }
+
+    Ok(None)
 }
 
 // soft delete

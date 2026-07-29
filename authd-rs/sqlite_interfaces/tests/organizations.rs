@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::organizations;
-use sqlite_interfaces::organizations::{CreateParams, DeleteParams};
+use sqlite_interfaces::organizations::{CreateParams, DeleteParams, PatchParams};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
@@ -44,14 +44,27 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e.into()),
     };
 
-    assert!(Some(organization.clone()) == read_organization_by_id);
+    // read by id
+    let patch_organization = match organizations::patch(
+        &mut conn,
+        &PatchParams {
+            id: 0,
+            title: "more_sqlite_tests".to_string(),
+            current_timestamp: 10,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    assert!(read_organization_by_id.clone() != patch_organization);
 
     // soft delete
     let delete_organization = match organizations::delete(
         &mut conn,
         &DeleteParams {
             id: 0,
-            current_timestamp: 10,
+            current_timestamp: 15,
         },
     ) {
         Ok(ck) => ck,
@@ -61,6 +74,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     match delete_organization {
         Some(delete_org) => {
             assert!(organization.id == delete_org.id);
+            assert!(delete_org.title == "more_sqlite_tests");
             assert!(delete_org.deleted_at != None);
         }
         _ => assert!(false, "None returned after delete organization"),
