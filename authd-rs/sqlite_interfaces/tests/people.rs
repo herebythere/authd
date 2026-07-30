@@ -17,7 +17,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         assert!(false, "failed to create people table");
     }
 
-    // // create
+    // create
     let person = match people::create(
         &mut conn,
         &CreateParams {
@@ -33,7 +33,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e.into()),
     };
 
-    // // read by id
+    // read by id
     let read_person = match people::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
         Err(e) => return Err(e.into()),
@@ -82,26 +82,26 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     assert!(person.id == patched_person.id);
     assert!(person.password_hash_results != patched_person.password_hash_results);
 
-    // // soft delete
-    // let delete_organization = match organizations::delete(
-    //     &mut conn,
-    //     &DeleteParams {
-    //         id: 0,
-    //         current_timestamp: 15,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e.into()),
-    // };
+    // soft delete
+    let delete_people = match people::delete(
+        &mut conn,
+        &DeleteParams {
+            id: 0,
+            current_timestamp: 15,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
 
-    // match delete_organization {
-    //     Some(delete_org) => {
-    //         assert!(organization.id == delete_org.id);
-    //         assert!(delete_org.title == "more_sqlite_tests");
-    //         assert!(delete_org.deleted_at != None);
-    //     }
-    //     _ => assert!(false, "None returned after delete organization"),
-    // }
+    match delete_people {
+        Some(del_person) => {
+            assert!(person.id == del_person.id);
+            assert!(del_person.multi_factor_required == false);
+            assert!(del_person.deleted_at != None);
+        }
+        _ => assert!(false, "None returned after delete organization"),
+    }
 
     Ok(())
 }

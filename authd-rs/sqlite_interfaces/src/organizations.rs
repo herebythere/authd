@@ -147,6 +147,7 @@ pub struct PatchParams {
     pub current_timestamp: i64,
 }
 
+// explicit patch (no setting null / option)
 pub fn patch(
     conn: &mut Connection,
     params: &PatchParams,

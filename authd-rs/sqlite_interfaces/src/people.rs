@@ -124,59 +124,7 @@ pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<Person>, Sqli
     Ok(None)
 }
 
-// update password
-pub struct UpdatePasswordParams {
-    pub id: i64,
-    pub password_hash_results: String,
-    pub current_timestamp: i64,
-}
-
-pub fn update_password(
-    conn: &mut Connection,
-    params: &UpdatePasswordParams,
-) -> Result<Option<Person>, SqliteInterfaceError> {
-    let mut stmt = match conn.prepare(
-        "
-        UPDATE OR IGNORE people
-            SET
-                password_hash_results = ?1,
-                updated_at = ?2
-            WHERE
-                deleted_at IS NULL
-                AND
-                id = ?3
-        RETURNING
-            *
-        ",
-    ) {
-        Ok(stmt) => stmt,
-        Err(e) => {
-            return Err(SqliteInterfaceError::Rusqlite(e));
-        }
-    };
-
-    let mut entry_iter = match stmt.query_map(
-        (
-            params.password_hash_results.clone(),
-            params.current_timestamp,
-            params.id,
-        ),
-        get_entry_from_row,
-    ) {
-        Ok(entry_iter) => entry_iter,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    if let Some(entry_maybe) = entry_iter.next() {
-        if let Ok(entry) = entry_maybe {
-            return Ok(Some(entry));
-        }
-    }
-
-    Ok(None)
-}
-
-// update
+// explicit patch (no setting null / option) (never set password_hash_results)
 pub struct PatchParams {
     pub id: i64,
     pub internal: Option<bool>,
@@ -221,6 +169,58 @@ pub fn patch(
         (
             params.internal,
             params.multi_factor_required,
+            params.current_timestamp,
+            params.id,
+        ),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    if let Some(entry_maybe) = entry_iter.next() {
+        if let Ok(entry) = entry_maybe {
+            return Ok(Some(entry));
+        }
+    }
+
+    Ok(None)
+}
+
+pub struct UpdatePasswordParams {
+    pub id: i64,
+    pub password_hash_results: String,
+    pub current_timestamp: i64,
+}
+
+// explicit isolated method to update password
+pub fn update_password(
+    conn: &mut Connection,
+    params: &UpdatePasswordParams,
+) -> Result<Option<Person>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        UPDATE OR IGNORE people
+            SET
+                password_hash_results = ?1,
+                updated_at = ?2
+            WHERE
+                deleted_at IS NULL
+                AND
+                id = ?3
+        RETURNING
+            *
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => {
+            return Err(SqliteInterfaceError::Rusqlite(e));
+        }
+    };
+
+    let mut entry_iter = match stmt.query_map(
+        (
+            params.password_hash_results.clone(),
             params.current_timestamp,
             params.id,
         ),
