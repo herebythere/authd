@@ -10,5 +10,6 @@
 pub mod errors;
 pub mod ip_addresses;
 pub mod organizations;
+pub mod people;
 
 // type connection if feature sql lite

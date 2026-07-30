@@ -1,10 +1,10 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::organizations;
-use sqlite_interfaces::organizations::{CreateParams, DeleteParams, PatchParams, DangerouslyDeleteParams};
+use sqlite_interfaces::organizations::{
+    CreateParams, DangerouslyDeleteParams, DeleteParams, PatchParams,
+};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
-
-// Box<dyn std::error::Error>
 
 #[test]
 fn crud_operations() -> Result<(), SqliteInterfaceError> {
@@ -86,7 +86,6 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &DangerouslyDeleteParams {
             window_length_ms: 100,
             current_timestamp: 116,
-            entry_limit: 1024,
         },
     ) {
         Ok(ck) => ck,
@@ -94,12 +93,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     };
 
     // confirm nothing is returned
-    let read_deleted_organization = match organizations::read_by_title(&mut conn, "more_sqlite_tests") {
-        Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
-    };
+    let read_deleted_organization =
+        match organizations::read_by_title(&mut conn, "more_sqlite_tests") {
+            Ok(ck) => ck,
+            Err(e) => return Err(e.into()),
+        };
 
     assert!(read_deleted_organization == None);
-    
+
     Ok(())
 }

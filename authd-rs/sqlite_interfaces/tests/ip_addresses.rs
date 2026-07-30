@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::ip_addresses;
-use sqlite_interfaces::ip_addresses::UpsertParams;
+use sqlite_interfaces::ip_addresses::{DangerouslyDeleteParams, UpsertParams};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
@@ -77,6 +77,18 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
 
     assert!(ip_address_new_window.window_count == 1);
     assert!(ip_address_new_window.prev_window_count == 0);
+
+    let _ = match ip_addresses::dangerously_delete(
+        &mut conn,
+        &DangerouslyDeleteParams {
+            organization_id: 0,
+            current_timestamp: 138,
+            window_length_ms: 100,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
 
     Ok(())
 }

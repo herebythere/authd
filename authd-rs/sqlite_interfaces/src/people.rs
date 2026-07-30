@@ -1,22 +1,28 @@
 use rusqlite::{Connection, Error as RusqliteError, Result, Row};
-use type_flyweight::organizations::Organization;
+use type_flyweight::people::Person;
 
 use crate::errors::SqliteInterfaceError;
 
-fn get_entry_from_row(row: &Row) -> Result<Organization, RusqliteError> {
-    Ok(Organization {
+fn get_entry_from_row(row: &Row) -> Result<Person, RusqliteError> {
+    Ok(Person {
         id: row.get(0)?,
-        title: row.get(1)?,
-        updated_at: row.get(2)?,
-        deleted_at: row.get(3)?,
+        organization_id: row.get(1)?,
+        internal: row.get(2)?,
+        multi_factor_enabled: row.get(3)?,
+        password_hash_results: row.get(4)?,
+        updated_at: row.get(5)?,
+        deleted_at: row.get(6)?,
     })
 }
 
 pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
     let results = conn.execute(
-        "CREATE TABLE IF NOT EXISTS organizations (
+        "CREATE TABLE IF NOT EXISTS people (
             id INTEGER PRIMARY KEY,
-            title TEXT NOT NULL,
+			organization_id INTEGER NOT NULL,
+			internal INTEGER NOT NULL,
+			multi_factor_enabled INTEGER NOT NULL,
+            password_hash_results TEXT NOT NULL,
 			updated_at INTEGER NOT NULL,
             deleted_at INTEGER
         )",
@@ -32,20 +38,23 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
 
 pub struct CreateParams {
     pub id: i64,
-    pub title: String,
+    pub organization_id: i64,
+    pub internal: bool,
+    pub multi_factor_enabled: bool,
+    pub password_hash_results: String,
     pub current_timestamp: i64,
 }
 
 pub fn create(
     conn: &mut Connection,
     params: &CreateParams,
-) -> Result<Organization, SqliteInterfaceError> {
+) -> Result<Person, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        INSERT INTO organizations
-            (id, title, updated_at)
+        INSERT INTO people
+            (id, organization_id, internal, multi_factor_enabled, password_hash_results, updated_at)
         VALUES
-            (?1, ?2, ?3)
+            (?1, ?2, ?3, ?4, ?5, ?6)
         RETURNING
             *
     ",
@@ -55,7 +64,14 @@ pub fn create(
     };
 
     let mut entry_iter = match stmt.query_map(
-        (params.id, params.title.clone(), params.current_timestamp),
+        (
+            params.id,
+            params.organization_id,
+            params.internal,
+            params.multi_factor_enabled,
+            params.password_hash_results.clone(),
+            params.current_timestamp,
+        ),
         get_entry_from_row,
     ) {
         Ok(entry_iter) => entry_iter,
@@ -69,20 +85,21 @@ pub fn create(
     }
 
     Err(SqliteInterfaceError::Custom(
-        "failed to create organization".to_string(),
+        "failed to create people".to_string(),
     ))
 }
 
-pub fn read_by_id(
-    conn: &mut Connection,
-    id: i64,
-) -> Result<Option<Organization>, SqliteInterfaceError> {
+// read by title
+// paginated read
+// patch
+
+pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<Person>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT
             *
         FROM
-            organizations
+            people
         WHERE
 			deleted_at IS NULL
             AND
@@ -107,55 +124,22 @@ pub fn read_by_id(
     Ok(None)
 }
 
-pub fn read_by_title(
-    conn: &mut Connection,
-    title: &str,
-) -> Result<Option<Organization>, SqliteInterfaceError> {
-    let mut stmt = match conn.prepare(
-        "
-        SELECT
-            *
-        FROM
-            organizations
-        WHERE
-            deleted_at IS NULL
-            AND
-            title = ?1
-        ",
-    ) {
-        Ok(stmt) => stmt,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    let mut entry_iter = match stmt.query_map([title], get_entry_from_row) {
-        Ok(entry_iter) => entry_iter,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    if let Some(entry_maybe) = entry_iter.next() {
-        if let Ok(entry) = entry_maybe {
-            return Ok(Some(entry));
-        }
-    }
-
-    Ok(None)
-}
-
-pub struct PatchParams {
+// update password
+pub struct UpdatePasswordParams {
     pub id: i64,
-    pub title: String,
+    pub password_hash_results: String,
     pub current_timestamp: i64,
 }
 
-pub fn patch(
+pub fn update_password(
     conn: &mut Connection,
-    params: &PatchParams,
-) -> Result<Option<Organization>, SqliteInterfaceError> {
+    params: &UpdatePasswordParams,
+) -> Result<Option<Person>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        UPDATE OR IGNORE organizations
+        UPDATE OR IGNORE people
             SET
-                title = ?1,
+                password_hash_results = ?1,
                 updated_at = ?2
             WHERE
                 deleted_at IS NULL
@@ -172,7 +156,74 @@ pub fn patch(
     };
 
     let mut entry_iter = match stmt.query_map(
-        (params.title.clone(), params.current_timestamp, params.id),
+        (
+            params.password_hash_results.clone(),
+            params.current_timestamp,
+            params.id,
+        ),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    if let Some(entry_maybe) = entry_iter.next() {
+        if let Ok(entry) = entry_maybe {
+            return Ok(Some(entry));
+        }
+    }
+
+    Ok(None)
+}
+
+// update
+pub struct PatchParams {
+    pub id: i64,
+    pub internal: Option<bool>,
+    pub multi_factor_enabled: Option<bool>,
+    pub current_timestamp: i64,
+}
+
+pub fn patch(
+    conn: &mut Connection,
+    params: &PatchParams,
+) -> Result<Option<Person>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        UPDATE OR IGNORE people
+            SET
+                internal =
+                    CASE
+                        WHEN ?1 IS NOT NULL THEN ?1
+                        ELSE internal
+                    END,
+                multi_factor_enabled =
+                    CASE
+                        WHEN ?2 IS NOT NULL THEN ?2
+                        ELSE multi_factor_enabled
+                    END,
+				updated_at = ?3
+            WHERE
+                deleted_at IS NULL
+                AND
+                id = ?4
+        RETURNING
+            *
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => {
+            return Err(SqliteInterfaceError::Rusqlite(e));
+        }
+    };
+
+    let mut entry_iter = match stmt.query_map(
+        (
+            params.internal,
+            params.multi_factor_enabled,
+            params.current_timestamp,
+            params.id,
+        ),
         get_entry_from_row,
     ) {
         Ok(entry_iter) => entry_iter,
@@ -197,10 +248,10 @@ pub struct DeleteParams {
 pub fn delete(
     conn: &mut Connection,
     params: &DeleteParams,
-) -> Result<Option<Organization>, SqliteInterfaceError> {
+) -> Result<Option<Person>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        UPDATE OR IGNORE organizations
+        UPDATE OR IGNORE people
             SET deleted_at = ?1
             WHERE id = ?2
         RETURNING
@@ -229,30 +280,40 @@ pub fn delete(
 }
 
 pub struct DangerouslyDeleteParams {
+    pub organization_id: i64,
     pub window_length_ms: i64,
     pub current_timestamp: i64,
 }
 
-pub fn dangerously_delete(
+pub fn dangerously_delete_entries(
     conn: &mut Connection,
     params: &DangerouslyDeleteParams,
 ) -> Result<(), SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         DELETE FROM
-            organizations
+            people
         WHERE
-            deleted_at IS NOT NULL
+			deleted_at IS NOT NULL
             AND
-			?1 < (?2 - deleted_at)
+            organization_id = ?1
+			AND
+			?2 < (?3 - deleted_at)
         ",
     ) {
         Ok(stmt) => stmt,
         Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
     };
 
+    // While deleted count != 0
+    // So call delete until returned rows is 0
+
     let _ = match stmt.query_map(
-        (params.window_length_ms, params.current_timestamp),
+        (
+            params.organization_id,
+            params.window_length_ms,
+            params.current_timestamp,
+        ),
         get_entry_from_row,
     ) {
         Ok(entry_iter) => entry_iter,

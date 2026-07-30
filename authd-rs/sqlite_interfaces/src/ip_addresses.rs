@@ -98,10 +98,47 @@ pub fn upsert(
     }
 
     Err(SqliteInterfaceError::Custom(
-        "failed to create organization".to_string(),
+        "failed to rate-limit ip address".to_string(),
     ))
 }
 
 // paginated read
+pub struct DangerouslyDeleteParams {
+    pub organization_id: i64,
+    pub window_length_ms: i64,
+    pub current_timestamp: i64,
+}
 
 // dangerously delete
+pub fn dangerously_delete(
+    conn: &mut Connection,
+    params: &DangerouslyDeleteParams,
+) -> Result<(), SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        DELETE FROM
+            ip_addresses
+        WHERE
+			organization_id = ?1
+			AND
+			(?2 * 2) < (?3 - updated_at)
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let _ = match stmt.query_map(
+        (
+            params.organization_id,
+            params.window_length_ms,
+            params.current_timestamp,
+        ),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    Ok(())
+}
