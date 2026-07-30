@@ -24,7 +24,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
             id: 0,
             organization_id: 2,
             internal: true,
-            multi_factor_enabled: true,
+            multi_factor_required: true,
             password_hash_results: "im just a little guy".to_string(),
             current_timestamp: 5,
         },
@@ -61,7 +61,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &PatchParams {
             id: 0,
             internal: None,
-            multi_factor_enabled: Some(false),
+            multi_factor_required: Some(false),
             current_timestamp: 10,
         },
     ) {

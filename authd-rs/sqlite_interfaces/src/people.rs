@@ -8,7 +8,7 @@ fn get_entry_from_row(row: &Row) -> Result<Person, RusqliteError> {
         id: row.get(0)?,
         organization_id: row.get(1)?,
         internal: row.get(2)?,
-        multi_factor_enabled: row.get(3)?,
+        multi_factor_required: row.get(3)?,
         password_hash_results: row.get(4)?,
         updated_at: row.get(5)?,
         deleted_at: row.get(6)?,
@@ -21,7 +21,7 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
             id INTEGER PRIMARY KEY,
 			organization_id INTEGER NOT NULL,
 			internal INTEGER NOT NULL,
-			multi_factor_enabled INTEGER NOT NULL,
+			multi_factor_required INTEGER NOT NULL,
             password_hash_results TEXT NOT NULL,
 			updated_at INTEGER NOT NULL,
             deleted_at INTEGER
@@ -40,7 +40,7 @@ pub struct CreateParams {
     pub id: i64,
     pub organization_id: i64,
     pub internal: bool,
-    pub multi_factor_enabled: bool,
+    pub multi_factor_required: bool,
     pub password_hash_results: String,
     pub current_timestamp: i64,
 }
@@ -52,7 +52,7 @@ pub fn create(
     let mut stmt = match conn.prepare(
         "
         INSERT INTO people
-            (id, organization_id, internal, multi_factor_enabled, password_hash_results, updated_at)
+            (id, organization_id, internal, multi_factor_required, password_hash_results, updated_at)
         VALUES
             (?1, ?2, ?3, ?4, ?5, ?6)
         RETURNING
@@ -68,7 +68,7 @@ pub fn create(
             params.id,
             params.organization_id,
             params.internal,
-            params.multi_factor_enabled,
+            params.multi_factor_required,
             params.password_hash_results.clone(),
             params.current_timestamp,
         ),
@@ -180,7 +180,7 @@ pub fn update_password(
 pub struct PatchParams {
     pub id: i64,
     pub internal: Option<bool>,
-    pub multi_factor_enabled: Option<bool>,
+    pub multi_factor_required: Option<bool>,
     pub current_timestamp: i64,
 }
 
@@ -197,10 +197,10 @@ pub fn patch(
                         WHEN ?1 IS NOT NULL THEN ?1
                         ELSE internal
                     END,
-                multi_factor_enabled =
+                multi_factor_required =
                     CASE
                         WHEN ?2 IS NOT NULL THEN ?2
-                        ELSE multi_factor_enabled
+                        ELSE multi_factor_required
                     END,
 				updated_at = ?3
             WHERE
@@ -220,7 +220,7 @@ pub fn patch(
     let mut entry_iter = match stmt.query_map(
         (
             params.internal,
-            params.multi_factor_enabled,
+            params.multi_factor_required,
             params.current_timestamp,
             params.id,
         ),
