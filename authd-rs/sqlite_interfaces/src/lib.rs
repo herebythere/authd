@@ -7,6 +7,7 @@
 // pub mod totp;
 
 pub mod contact_kinds;
+pub mod contacts;
 pub mod errors;
 pub mod ip_addresses;
 pub mod organizations;

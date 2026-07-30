@@ -15,5 +15,6 @@ pub struct Contact {
     pub people_id: i64,
     pub contact_kind_id: i64,
     pub content: String,
+    pub updated_at: Option<i64>,
     pub deleted_at: Option<i64>,
 }
