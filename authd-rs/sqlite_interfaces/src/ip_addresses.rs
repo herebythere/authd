@@ -103,3 +103,5 @@ pub fn upsert(
 }
 
 // paginated read
+
+// dangerously delete

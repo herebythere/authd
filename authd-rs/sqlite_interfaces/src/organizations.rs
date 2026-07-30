@@ -111,7 +111,7 @@ pub fn read_by_id(
     Ok(None)
 }
 
-pub fn read(
+pub fn read_by_title(
     conn: &mut Connection,
     title: &str,
 ) -> Result<Option<Organization>, SqliteInterfaceError> {
@@ -231,4 +231,49 @@ pub fn delete(
     }
 
     Ok(None)
+}
+
+pub struct DangerouslyDeleteParams {
+    pub window_length_ms: i64,
+    pub current_timestamp: i64,
+    pub entry_limit: i64,
+}
+
+pub fn dangerously_delete(
+    conn: &mut Connection,
+    params: &DangerouslyDeleteParams,
+) -> Result<(), SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        DELETE FROM
+            organizations
+        WHERE
+            deleted_at IS NOT NULL
+            AND
+			?1 < (?2 - deleted_at)
+		LIMIT
+			?3
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    // While deleted count != 0
+    // So call delete until returned rows is 0
+
+    // while count != 0 {
+    let _ = match stmt.query_map(
+        (
+            params.window_length_ms,
+            params.current_timestamp,
+            params.entry_limit,
+        ),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+    
+    Ok(())
 }
