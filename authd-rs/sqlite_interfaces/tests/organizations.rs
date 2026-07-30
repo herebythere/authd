@@ -81,7 +81,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     }
 
     // dangerously delete
-    let dangerously = match organizations::dangerously_delete(
+    let _ = match organizations::dangerously_delete(
         &mut conn,
         &DangerouslyDeleteParams {
             window_length_ms: 100,

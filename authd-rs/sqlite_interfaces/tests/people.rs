@@ -1,6 +1,8 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::people;
-use sqlite_interfaces::people::{CreateParams, DeleteParams, PatchParams, UpdatePasswordParams};
+use sqlite_interfaces::people::{
+    CreateParams, DangerouslyDeleteParams, DeleteParams, PatchParams, UpdatePasswordParams,
+};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
@@ -102,6 +104,25 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         }
         _ => assert!(false, "None returned after delete organization"),
     }
+
+    let _ = match people::dangerously_delete(
+        &mut conn,
+        &DangerouslyDeleteParams {
+            organization_id: 0,
+            current_timestamp: 138,
+            window_length_ms: 100,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    let read_deleted_people = match people::read_by_id(&mut conn, 0) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    assert!(read_deleted_people == None);
 
     Ok(())
 }

@@ -285,7 +285,7 @@ pub struct DangerouslyDeleteParams {
     pub current_timestamp: i64,
 }
 
-pub fn dangerously_delete_entries(
+pub fn dangerously_delete(
     conn: &mut Connection,
     params: &DangerouslyDeleteParams,
 ) -> Result<(), SqliteInterfaceError> {
