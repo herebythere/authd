@@ -3,6 +3,9 @@ use type_flyweight::contacts::Contact;
 
 use crate::errors::SqliteInterfaceError;
 
+// READ BY ORG
+// READ BY PEOPLE ID
+
 fn get_entry_from_row(row: &Row) -> Result<Contact, RusqliteError> {
     Ok(Contact {
         id: row.get(0)?,
