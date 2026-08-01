@@ -1,7 +1,7 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::organizations;
 use sqlite_interfaces::organizations::{
-    CreateParams, DangerouslyDeleteParams, DeleteParams, PatchParams,
+    CreateParams, ReadParams, DangerouslyDeleteParams, DeleteParams, PatchParams,
 };
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
@@ -44,7 +44,22 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e.into()),
     };
 
-    // read by id
+    // read
+    let read_organizations = match organizations::read(
+        &mut conn,
+        &ReadParams {
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    assert!(1 == read_organizations.len());
+    assert!(read_organizations.get(0) == Some(&Ok(organization.clone())));
+
+    // patch
     let patch_organization = match organizations::patch(
         &mut conn,
         &PatchParams {
