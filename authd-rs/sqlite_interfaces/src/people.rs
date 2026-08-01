@@ -93,46 +93,15 @@ pub fn create(
 // paginated read
 // patch
 
-pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<Person>, SqliteInterfaceError> {
-    let mut stmt = match conn.prepare(
-        "
-        SELECT
-            *
-        FROM
-            people
-        WHERE
-			deleted_at IS NULL
-            AND
-            id = ?1
-        ",
-    ) {
-        Ok(stmt) => stmt,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    let mut entry_iter = match stmt.query_map([id], get_entry_from_row) {
-        Ok(entry_iter) => entry_iter,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    if let Some(entry_maybe) = entry_iter.next() {
-        if let Ok(entry) = entry_maybe {
-            return Ok(Some(entry));
-        }
-    }
-
-    Ok(None)
+pub struct ReadParams {
+    pub organization_id: i64,
+    pub offset: i64,
+    pub limit: i64,
 }
 
-pub struct ReadByOrganizationParams {
-    organization_id: i64,
-    offset: i64,
-    limit: i64,
-}
-
-pub fn read_by_organization(
+pub fn read(
     conn: &mut Connection,
-    params: &ReadByOrganizationParams,
+    params: &ReadParams,
 ) -> Result<Vec<Result<Person, SqliteInterfaceError>>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
@@ -171,6 +140,37 @@ pub fn read_by_organization(
     }
 
     Ok(entries)
+}
+
+pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<Person>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        SELECT
+            *
+        FROM
+            people
+        WHERE
+			deleted_at IS NULL
+            AND
+            id = ?1
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let mut entry_iter = match stmt.query_map([id], get_entry_from_row) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    if let Some(entry_maybe) = entry_iter.next() {
+        if let Ok(entry) = entry_maybe {
+            return Ok(Some(entry));
+        }
+    }
+
+    Ok(None)
 }
 
 // explicit patch (no setting null / option) (never set password_hash_results)

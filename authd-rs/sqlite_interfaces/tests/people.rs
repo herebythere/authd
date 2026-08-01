@@ -1,7 +1,8 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::people;
 use sqlite_interfaces::people::{
-    CreateParams, DangerouslyDeleteParams, DeleteParams, PatchParams, UpdatePasswordParams,
+    CreateParams, DangerouslyDeleteParams, DeleteParams, PatchParams, ReadParams,
+    UpdatePasswordParams,
 };
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
@@ -41,7 +42,20 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e.into()),
     };
 
-    assert!(Some(person.clone()) == read_person);
+    let read_persons = match people::read(
+        &mut conn,
+        &ReadParams {
+            organization_id: 2,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    assert!(1 == read_persons.len());
+    assert!(read_persons.get(0) == Some(&Ok(person.clone())));
 
     // update passwords
     let update_passwords = match people::update_password(
