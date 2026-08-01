@@ -1,6 +1,6 @@
+pub mod actions;
 pub mod api_keys;
 pub mod contacts;
-// pub mod actions;
 pub mod ip_addresses;
 pub mod organizations;
 pub mod people;
