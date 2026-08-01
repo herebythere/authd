@@ -73,6 +73,49 @@ pub fn create(
     ))
 }
 
+pub struct ReadParams {
+    pub offset: i64,
+    pub limit: i64,
+}
+
+pub fn read(
+    conn: &mut Connection,
+    params: &ReadParams,
+) -> Result<Vec<Result<Organization, SqliteInterfaceError>>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        SELECT
+            *
+        FROM
+            oganizations
+        WHERE
+			deleted_at IS NULL
+        LIMIT
+            ?1
+        OFFSET
+            ?2
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let entry_iter = match stmt.query_map((params.limit, params.offset), get_entry_from_row) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let mut entries: Vec<Result<Organization, SqliteInterfaceError>> = Vec::new();
+    for entry in entry_iter {
+        match entry {
+            Ok(ntry) => entries.push(Ok(ntry)),
+            Err(e) => entries.push(Err(SqliteInterfaceError::Rusqlite(e))),
+        }
+    }
+
+    Ok(entries)
+}
+
 pub fn read_by_id(
     conn: &mut Connection,
     id: i64,
