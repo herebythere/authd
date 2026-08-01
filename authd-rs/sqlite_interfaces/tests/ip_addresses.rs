@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::ip_addresses;
-use sqlite_interfaces::ip_addresses::{DangerouslyDeleteParams, UpsertParams};
+use sqlite_interfaces::ip_addresses::{DangerouslyDeleteParams, ReadParams, UpsertParams};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
@@ -30,6 +30,23 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Ok(ck) => ck,
         Err(e) => return Err(e.into()),
     };
+
+    let ip_addresses = match ip_addresses::read(
+        &mut conn,
+        &ReadParams {
+            organization_id: 0,
+            current_timestamp: 26,
+            window_length_ms: 10,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    assert!(1 == ip_addresses.len());
+    assert!(ip_addresses.get(0) == Some(&Ok(ip_address.clone())));
 
     let ip_address_updated = match ip_addresses::upsert(
         &mut conn,
