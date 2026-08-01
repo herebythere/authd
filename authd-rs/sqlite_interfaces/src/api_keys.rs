@@ -42,7 +42,7 @@ pub struct CreateParams {
     pub organization_id: i64,
     pub people_id: i64,
     pub title: String,
-    pub lifetime: Option<i64>,
+    pub lifetime: i64,
 }
 
 pub fn create(
