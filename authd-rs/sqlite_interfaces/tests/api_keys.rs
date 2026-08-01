@@ -23,6 +23,8 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
             organization_id: 1,
             people_id: 2,
             title: "did i do that?".to_string(),
+            token: "secret_squirrel".to_string(),
+            created_at: 0,
             lifetime: 100,
         },
     ) {

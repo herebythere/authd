@@ -89,10 +89,6 @@ pub fn create(
     ))
 }
 
-// read by title
-// paginated read
-// patch
-
 pub struct ReadParams {
     pub organization_id: i64,
     pub offset: i64,
@@ -353,9 +349,6 @@ pub fn dangerously_delete(
         Ok(stmt) => stmt,
         Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
     };
-
-    // While deleted count != 0
-    // So call delete until returned rows is 0
 
     let _ = match stmt.query_map(
         (

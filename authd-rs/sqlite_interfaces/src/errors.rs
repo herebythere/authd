@@ -1,7 +1,7 @@
 use rusqlite::Error as RusqliteError;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum SqliteInterfaceError {
     Rusqlite(RusqliteError),
     Custom(String),

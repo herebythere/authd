@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::totp;
-use sqlite_interfaces::totp::{CreateParams, DangerouslyDeleteParams, DeleteParams};
+use sqlite_interfaces::totp::{CreateParams, DangerouslyDeleteParams, DeleteParams, ReadParams};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
@@ -39,6 +39,22 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     };
 
     assert!(Some(totp.clone()) == read_totp);
+
+    // read
+    let read_totps = match totp::read(
+        &mut conn,
+        &ReadParams {
+            organization_id: 1,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e.into()),
+    };
+
+    assert!(1 == read_totps.len());
+    assert!(read_totps.get(0) == Some(&Ok(totp.clone())));
 
     // soft delete
     let delete_totp = match totp::delete(

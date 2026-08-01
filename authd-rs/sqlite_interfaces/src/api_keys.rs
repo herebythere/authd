@@ -5,7 +5,6 @@ use crate::errors::SqliteInterfaceError;
 
 // READ BY ORG
 // READ BY PEOPLE ID
-// Needs a lifetime and created_at for staleness comparisons
 
 fn get_entry_from_row(row: &Row) -> Result<ApiKey, RusqliteError> {
     Ok(ApiKey {
@@ -13,8 +12,10 @@ fn get_entry_from_row(row: &Row) -> Result<ApiKey, RusqliteError> {
         organization_id: row.get(1)?,
         people_id: row.get(2)?,
         title: row.get(3)?,
-        lifetime: row.get(4)?,
-        deleted_at: row.get(5)?,
+        token: row.get(4)?,
+        lifetime: row.get(5)?,
+        created_at: row.get(6)?,
+        deleted_at: row.get(7)?,
     })
 }
 
@@ -25,7 +26,9 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
 			organization_id INTEGER NOT NULL,
 			people_id INTEGER NOT NULL,
             title TEXT NOT NULL,
-            lifetime INTEGER,
+            token TEXT NOT NULL,
+            lifetime INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
             deleted_at INTEGER
         )",
         (),
@@ -43,7 +46,9 @@ pub struct CreateParams {
     pub organization_id: i64,
     pub people_id: i64,
     pub title: String,
+    pub token: String,
     pub lifetime: i64,
+    pub created_at: i64,
 }
 
 pub fn create(
@@ -53,9 +58,9 @@ pub fn create(
     let mut stmt = match conn.prepare(
         "
         INSERT INTO api_keys
-            (id, organization_id, people_id, title, lifetime)
+            (id, organization_id, people_id, title, token, lifetime, created_at)
         VALUES
-            (?1, ?2, ?3, ?4, ?5)
+            (?1, ?2, ?3, ?4, ?5, ?6, ?7)
         RETURNING
             *
     ",
@@ -70,7 +75,9 @@ pub fn create(
             params.organization_id,
             params.people_id,
             params.title.clone(),
+            params.token.clone(),
             params.lifetime,
+            params.created_at,
         ),
         get_entry_from_row,
     ) {
@@ -119,6 +126,67 @@ pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<ApiKey>, Sqli
 
     Ok(None)
 }
+
+// pub struct ReadByPeopleParams {
+//     organization_id: i64,
+//     people_id: i64,
+//     offset: i64,
+//     limit: i64,
+// }
+
+// pub fn read_by_person(
+//     conn: &mut Connection,
+//     params: &ReadByPeopleParams,
+// ) -> Result<Vec<ApiKey>, SqliteInterfaceError> {
+//     let mut stmt = match conn.prepare(
+//         "
+//         SELECT
+//             *
+//         FROM
+//             api_keys
+//         WHERE
+// 			deleted_at IS NULL
+//             AND
+//             organization_id = ?1
+//             AND
+//             people_id = ?2
+//         LIMIT
+//             ?3
+//         OFFSET
+//             ?4
+//         ",
+//     ) {
+//         Ok(stmt) => stmt,
+//         Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+//     };
+
+//     let entry_iter = match stmt.query_map(
+//         (
+//             params.organization_id,
+//             params.people_id,
+//             params.limit,
+//             params.offset,
+//         ),
+//         get_entry_from_row,
+//     ) {
+//         Ok(entry_iter) => entry_iter,
+//         Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+//     };
+
+//     let mut entries: Vec<Result<ApiKey, SqliteInterfaceError>> = Vec::new();
+//     for entry in entry_iter {
+//         match entry {
+//             Ok() => ,
+//             Err() => ,
+//         };
+
+//         if let Ok(ntry) = entry {
+//             entries.push(Ok(ntry));
+//         } else
+//     }
+
+//     Ok(entries)
+// }
 
 pub struct DeleteParams {
     pub id: i64,

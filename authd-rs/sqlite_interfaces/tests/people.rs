@@ -41,7 +41,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Ok(ck) => ck,
         Err(e) => return Err(e.into()),
     };
-    
+
     assert!(read_person == Some(person.clone()));
 
     // read

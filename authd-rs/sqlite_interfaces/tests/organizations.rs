@@ -1,7 +1,7 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::organizations;
 use sqlite_interfaces::organizations::{
-    CreateParams, ReadParams, DangerouslyDeleteParams, DeleteParams, PatchParams,
+    CreateParams, DangerouslyDeleteParams, DeleteParams, PatchParams, ReadParams,
 };
 
 use sqlite_interfaces::errors::SqliteInterfaceError;

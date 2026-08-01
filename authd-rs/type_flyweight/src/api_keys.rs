@@ -6,6 +6,8 @@ pub struct ApiKey {
     pub organization_id: i64,
     pub people_id: i64,
     pub title: String,
+    pub token: String,
     pub lifetime: i64,
+    pub created_at: i64,
     pub deleted_at: Option<i64>,
 }

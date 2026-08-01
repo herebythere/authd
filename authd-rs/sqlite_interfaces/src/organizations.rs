@@ -87,7 +87,7 @@ pub fn read(
         SELECT
             *
         FROM
-            oganizations
+            organizations
         WHERE
 			deleted_at IS NULL
         LIMIT
