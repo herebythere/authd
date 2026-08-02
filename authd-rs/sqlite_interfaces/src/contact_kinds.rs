@@ -73,7 +73,6 @@ pub fn create(
     ))
 }
 
-
 pub struct ReadParams {
     pub organization_id: i64,
     pub offset: i64,

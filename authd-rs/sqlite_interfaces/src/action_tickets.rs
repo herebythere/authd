@@ -93,7 +93,10 @@ pub fn create(
     ))
 }
 
-pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<ActionTicket>, SqliteInterfaceError> {
+pub fn read_by_id(
+    conn: &mut Connection,
+    id: i64,
+) -> Result<Option<ActionTicket>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT
@@ -123,7 +126,6 @@ pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<ActionTicket>
 
     Ok(None)
 }
-
 
 pub struct ReadParams {
     pub organization_id: i64,

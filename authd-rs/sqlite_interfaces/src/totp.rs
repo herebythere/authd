@@ -196,7 +196,6 @@ pub fn read_by_person(
     Ok(entries)
 }
 
-
 pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<Totp>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "

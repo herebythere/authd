@@ -27,5 +27,6 @@ pub struct ActionRateLimit {
     pub action_kind_id: String,
     pub prev_window_count: i64,
     pub window_count: i64,
+    pub updated_at: i64,
     pub deleted_at: Option<i64>,
 }

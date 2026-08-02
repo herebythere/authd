@@ -1,6 +1,8 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::ip_addresses;
-use sqlite_interfaces::ip_addresses::{DangerouslyDeleteParams, ReadParams, IncrementRateLimitParams};
+use sqlite_interfaces::ip_addresses::{
+    DangerouslyDeleteParams, IncrementRateLimitParams, ReadParams,
+};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 

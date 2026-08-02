@@ -124,7 +124,6 @@ pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<ApiKey>, Sqli
     Ok(None)
 }
 
-
 pub struct ReadParams {
     pub organization_id: i64,
     pub offset: i64,
