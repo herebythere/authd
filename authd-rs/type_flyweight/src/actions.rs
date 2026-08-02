@@ -15,6 +15,7 @@ pub struct ActionTicket {
     pub people_id: Option<i64>,
     pub action_kind_id: i64,
     pub token: i64,
+    pub created_at: i64,
     pub deleted_at: Option<i64>,
 }
 
