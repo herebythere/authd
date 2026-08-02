@@ -92,8 +92,6 @@ pub fn read(
             contact_kinds
         WHERE
 			deleted_at IS NULL
-            AND
-            organization_id = ?1
         LIMIT
             ?2
         OFFSET

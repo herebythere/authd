@@ -3,9 +3,6 @@ use type_flyweight::totp::Totp;
 
 use crate::errors::SqliteInterfaceError;
 
-// READ BY ORG
-// READ BY PEOPLE ID
-
 fn get_entry_from_row(row: &Row) -> Result<Totp, RusqliteError> {
     Ok(Totp {
         id: row.get(0)?,
@@ -141,6 +138,64 @@ pub fn read(
 
     Ok(entries)
 }
+
+pub struct ReadByPersonParams {
+    pub organization_id: i64,
+    pub people_id: i64,
+    pub offset: i64,
+    pub limit: i64,
+}
+
+pub fn read_by_person(
+    conn: &mut Connection,
+    params: &ReadByPersonParams,
+) -> Result<Vec<Result<Totp, SqliteInterfaceError>>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        SELECT
+            *
+        FROM
+            totp
+        WHERE
+			deleted_at IS NULL
+            AND
+            organization_id = ?1
+            AND
+            people_id = ?2
+        LIMIT
+            ?3
+        OFFSET
+            ?4
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let entry_iter = match stmt.query_map(
+        (
+            params.organization_id,
+            params.people_id,
+            params.limit,
+            params.offset,
+        ),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let mut entries: Vec<Result<Totp, SqliteInterfaceError>> = Vec::new();
+    for entry in entry_iter {
+        match entry {
+            Ok(ntry) => entries.push(Ok(ntry)),
+            Err(e) => entries.push(Err(SqliteInterfaceError::Rusqlite(e))),
+        }
+    }
+
+    Ok(entries)
+}
+
 
 pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<Totp>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(

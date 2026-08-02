@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result};
 use sqlite_interfaces::ip_addresses;
-use sqlite_interfaces::ip_addresses::{DangerouslyDeleteParams, ReadParams, UpsertParams};
+use sqlite_interfaces::ip_addresses::{DangerouslyDeleteParams, ReadParams, IncrementRateLimitParams};
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
@@ -18,9 +18,9 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     }
 
     // create
-    let ip_address = match ip_addresses::upsert(
+    let ip_address = match ip_addresses::increment_rate_limit(
         &mut conn,
-        &UpsertParams {
+        &IncrementRateLimitParams {
             organization_id: 0,
             ip_address: "127.0.0.1".to_string(),
             current_timestamp: 5,
@@ -48,9 +48,9 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     assert!(1 == ip_addresses.len());
     assert!(ip_addresses.get(0) == Some(&Ok(ip_address.clone())));
 
-    let ip_address_updated = match ip_addresses::upsert(
+    let ip_address_updated = match ip_addresses::increment_rate_limit(
         &mut conn,
-        &UpsertParams {
+        &IncrementRateLimitParams {
             organization_id: 0,
             ip_address: "127.0.0.1".to_string(),
             current_timestamp: 8,
@@ -63,9 +63,9 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
 
     assert!(ip_address_updated.window_count == ip_address.window_count + 1);
 
-    let ip_address_updated_again = match ip_addresses::upsert(
+    let ip_address_updated_again = match ip_addresses::increment_rate_limit(
         &mut conn,
-        &UpsertParams {
+        &IncrementRateLimitParams {
             organization_id: 0,
             ip_address: "127.0.0.1".to_string(),
             current_timestamp: 16,
@@ -79,9 +79,9 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     assert!(ip_address_updated_again.window_count == 1);
     assert!(ip_address_updated_again.prev_window_count == 2);
 
-    let ip_address_new_window = match ip_addresses::upsert(
+    let ip_address_new_window = match ip_addresses::increment_rate_limit(
         &mut conn,
-        &UpsertParams {
+        &IncrementRateLimitParams {
             organization_id: 0,
             ip_address: "127.0.0.1".to_string(),
             current_timestamp: 37,

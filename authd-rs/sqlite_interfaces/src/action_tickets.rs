@@ -1,14 +1,14 @@
 use rusqlite::{Connection, Error as RusqliteError, Result, Row};
-use type_flyweight::api_keys::ApiKey;
+use type_flyweight::actions::ActionTicket;
 
 use crate::errors::SqliteInterfaceError;
 
-fn get_entry_from_row(row: &Row) -> Result<ApiKey, RusqliteError> {
-    Ok(ApiKey {
+fn get_entry_from_row(row: &Row) -> Result<ActionTicket, RusqliteError> {
+    Ok(ActionTicket {
         id: row.get(0)?,
         organization_id: row.get(1)?,
         people_id: row.get(2)?,
-        title: row.get(3)?,
+        action_kind_id: row.get(3)?,
         token: row.get(4)?,
         lifetime: row.get(5)?,
         created_at: row.get(6)?,
@@ -18,11 +18,11 @@ fn get_entry_from_row(row: &Row) -> Result<ApiKey, RusqliteError> {
 
 pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
     let results = conn.execute(
-        "CREATE TABLE IF NOT EXISTS api_keys (
+        "CREATE TABLE IF NOT EXISTS actions (
             id INTEGER PRIMARY KEY,
 			organization_id INTEGER NOT NULL,
 			people_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
+            action_kind_id INTEGER NOT NULL,
             token TEXT NOT NULL,
             lifetime INTEGER NOT NULL,
             created_at INTEGER NOT NULL,
@@ -42,7 +42,7 @@ pub struct CreateParams {
     pub id: i64,
     pub organization_id: i64,
     pub people_id: i64,
-    pub title: String,
+    pub action_kind_id: i64,
     pub token: String,
     pub lifetime: i64,
     pub created_at: i64,
@@ -51,11 +51,11 @@ pub struct CreateParams {
 pub fn create(
     conn: &mut Connection,
     params: &CreateParams,
-) -> Result<ApiKey, SqliteInterfaceError> {
+) -> Result<ActionTicket, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        INSERT INTO api_keys
-            (id, organization_id, people_id, title, token, lifetime, created_at)
+        INSERT INTO actions
+            (id, organization_id, people_id, action_kind_id, token, lifetime, created_at)
         VALUES
             (?1, ?2, ?3, ?4, ?5, ?6, ?7)
         RETURNING
@@ -71,7 +71,7 @@ pub fn create(
             params.id,
             params.organization_id,
             params.people_id,
-            params.title.clone(),
+            params.action_kind_id,
             params.token.clone(),
             params.lifetime,
             params.created_at,
@@ -89,17 +89,17 @@ pub fn create(
     }
 
     Err(SqliteInterfaceError::Custom(
-        "failed to create api_keys".to_string(),
+        "failed to create actions".to_string(),
     ))
 }
 
-pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<ApiKey>, SqliteInterfaceError> {
+pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<ActionTicket>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT
             *
         FROM
-            api_keys
+            actions
         WHERE
 			deleted_at IS NULL
             AND
@@ -134,13 +134,13 @@ pub struct ReadParams {
 pub fn read(
     conn: &mut Connection,
     params: &ReadParams,
-) -> Result<Vec<Result<ApiKey, SqliteInterfaceError>>, SqliteInterfaceError> {
+) -> Result<Vec<Result<ActionTicket, SqliteInterfaceError>>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT
             *
         FROM
-            api_keys
+            actions
         WHERE
 			deleted_at IS NULL
             AND
@@ -163,7 +163,7 @@ pub fn read(
         Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
     };
 
-    let mut entries: Vec<Result<ApiKey, SqliteInterfaceError>> = Vec::new();
+    let mut entries: Vec<Result<ActionTicket, SqliteInterfaceError>> = Vec::new();
     for entry in entry_iter {
         match entry {
             Ok(ntry) => entries.push(Ok(ntry)),
@@ -184,13 +184,13 @@ pub struct ReadByPersonParams {
 pub fn read_by_person(
     conn: &mut Connection,
     params: &ReadByPersonParams,
-) -> Result<Vec<Result<ApiKey, SqliteInterfaceError>>, SqliteInterfaceError> {
+) -> Result<Vec<Result<ActionTicket, SqliteInterfaceError>>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT
             *
         FROM
-            api_keys
+            actions
         WHERE
 			deleted_at IS NULL
             AND
@@ -220,7 +220,7 @@ pub fn read_by_person(
         Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
     };
 
-    let mut entries: Vec<Result<ApiKey, SqliteInterfaceError>> = Vec::new();
+    let mut entries: Vec<Result<ActionTicket, SqliteInterfaceError>> = Vec::new();
     for entry in entry_iter {
         match entry {
             Ok(ntry) => entries.push(Ok(ntry)),
@@ -239,10 +239,10 @@ pub struct DeleteParams {
 pub fn delete(
     conn: &mut Connection,
     params: &DeleteParams,
-) -> Result<Option<ApiKey>, SqliteInterfaceError> {
+) -> Result<Option<ActionTicket>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        UPDATE OR IGNORE api_keys
+        UPDATE OR IGNORE actions
             SET deleted_at = ?1
             WHERE id = ?2
         RETURNING
@@ -283,7 +283,7 @@ pub fn dangerously_delete(
     let mut stmt = match conn.prepare(
         "
         DELETE FROM
-            api_keys
+            actions
         WHERE
 			deleted_at IS NOT NULL
             AND

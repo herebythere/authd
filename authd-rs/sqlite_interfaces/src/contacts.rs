@@ -343,9 +343,6 @@ pub fn dangerously_delete(
         Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
     };
 
-    // While deleted count != 0
-    // So call delete until returned rows is 0
-
     let _ = match stmt.query_map(
         (
             params.organization_id,

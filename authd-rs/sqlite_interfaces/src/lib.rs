@@ -6,6 +6,7 @@
 // pub mod sessions;
 
 pub mod action_kinds;
+pub mod action_tickets;
 pub mod api_keys;
 pub mod contact_kinds;
 pub mod contacts;

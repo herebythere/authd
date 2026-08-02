@@ -90,7 +90,7 @@ pub fn read(
     Ok(entries)
 }
 
-pub struct UpsertParams {
+pub struct IncrementRateLimitParams {
     pub organization_id: i64,
     pub window_length_ms: i64,
     pub ip_address: String,
@@ -99,9 +99,9 @@ pub struct UpsertParams {
 
 // INSERT INTO users(username,score) VALUES('Johnny', 388)
 // ON CONFLICT(username) DO UPDATE SET score = '388';
-pub fn upsert(
+pub fn increment_rate_limit(
     conn: &mut Connection,
-    params: &UpsertParams,
+    params: &IncrementRateLimitParams,
 ) -> Result<IpAddressRateLimit, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
