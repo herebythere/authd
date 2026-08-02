@@ -73,6 +73,56 @@ pub fn create(
     ))
 }
 
+
+pub struct ReadParams {
+    pub organization_id: i64,
+    pub offset: i64,
+    pub limit: i64,
+}
+
+pub fn read(
+    conn: &mut Connection,
+    params: &ReadParams,
+) -> Result<Vec<Result<ContactKind, SqliteInterfaceError>>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        SELECT
+            *
+        FROM
+            contact_kinds
+        WHERE
+			deleted_at IS NULL
+            AND
+            organization_id = ?1
+        LIMIT
+            ?2
+        OFFSET
+            ?3
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let entry_iter = match stmt.query_map(
+        (params.organization_id, params.limit, params.offset),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let mut entries: Vec<Result<ContactKind, SqliteInterfaceError>> = Vec::new();
+    for entry in entry_iter {
+        match entry {
+            Ok(ntry) => entries.push(Ok(ntry)),
+            Err(e) => entries.push(Err(SqliteInterfaceError::Rusqlite(e))),
+        }
+    }
+
+    Ok(entries)
+}
+
 pub fn read_by_id(
     conn: &mut Connection,
     id: i64,
