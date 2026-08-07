@@ -6,7 +6,6 @@ use sqlite_interfaces::ip_addresses::{
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
-// Box<dyn std::error::Error>
 
 #[test]
 fn crud_operations() -> Result<(), SqliteInterfaceError> {

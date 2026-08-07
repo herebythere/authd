@@ -16,5 +16,6 @@ pub mod ip_addresses;
 pub mod organizations;
 pub mod people;
 pub mod totp;
+pub mod sessions;
 
 // type connection if feature sql lite
