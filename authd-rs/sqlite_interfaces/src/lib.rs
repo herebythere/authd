@@ -17,5 +17,6 @@ pub mod organizations;
 pub mod people;
 pub mod totp;
 pub mod sessions;
+pub mod number_settings;
 
 // type connection if feature sql lite

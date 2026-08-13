@@ -25,3 +25,8 @@ Use the following command to run an api server:
 auth_server ./db.sqlite 127.0.0.1:4000
 ```
 
+## Todos
+
+- last read at for data that needs cleanup
+- a way to reset a "secret" from the admin api and reset that stuff
+
