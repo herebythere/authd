@@ -1,4 +1,4 @@
-// NUMBER SETTINGS, close to contacts. no 
+// NUMBER SETTINGS, close to contacts. no
 
 use rusqlite::{Connection, Error as RusqliteError, Result, Row};
 use type_flyweight::settings::NumberSettings;
@@ -11,9 +11,8 @@ fn get_entry_from_row(row: &Row) -> Result<NumberSettings, RusqliteError> {
         organization_id: row.get(1)?,
         action_kind_id: row.get(2)?,
         number_value: row.get(3)?,
-        password_hash_results: row.get(4)?,
-        updated_at: row.get(5)?,
-        deleted_at: row.get(6)?,
+        updated_at: row.get(4)?,
+        deleted_at: row.get(5)?,
     })
 }
 
@@ -137,7 +136,10 @@ pub fn read(
     Ok(entries)
 }
 
-pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<NumberSettings>, SqliteInterfaceError> {
+pub fn read_by_id(
+    conn: &mut Connection,
+    id: i64,
+) -> Result<Option<NumberSettings>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         SELECT

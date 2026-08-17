@@ -6,7 +6,6 @@ use sqlite_interfaces::ip_addresses::{
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
 
-
 #[test]
 fn crud_operations() -> Result<(), SqliteInterfaceError> {
     let mut conn = match Connection::open_in_memory() {
@@ -29,7 +28,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     let ip_addresses = match ip_addresses::read(
@@ -43,7 +42,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(1 == ip_addresses.len());
@@ -59,7 +58,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(ip_address_updated.window_count == ip_address.window_count + 1);
@@ -74,7 +73,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(ip_address_updated_again.window_count == 1);
@@ -90,7 +89,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(ip_address_new_window.window_count == 1);
@@ -105,7 +104,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     Ok(())

@@ -29,13 +29,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(totp) => totp,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // read by id
     let read_totp = match totp::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(Some(totp.clone()) == read_totp);
@@ -50,7 +50,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(1 == read_totps.len());
@@ -65,7 +65,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     match delete_totp {
@@ -85,12 +85,12 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     let read_deleted_totp = match totp::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(read_deleted_totp == None);

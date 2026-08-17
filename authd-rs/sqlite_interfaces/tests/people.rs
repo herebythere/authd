@@ -33,13 +33,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(person) => person,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // read by id
     let read_person = match people::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(read_person == Some(person.clone()));
@@ -54,7 +54,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(1 == read_persons.len());
@@ -70,7 +70,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(Some(person.clone()) != update_passwords);
@@ -85,7 +85,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     let patched_person = match patch_person {
@@ -110,7 +110,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     match delete_people {
@@ -131,12 +131,12 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     let read_deleted_people = match people::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(read_deleted_people == None);

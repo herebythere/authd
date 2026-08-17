@@ -30,13 +30,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(contact) => contact,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // read by id
     let read_contact = match contacts::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(Some(contact.clone()) == read_contact);
@@ -50,7 +50,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     let patched_contact = match patch_contact {
@@ -75,7 +75,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     match delete_contact {
@@ -97,12 +97,12 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     let read_deleted_contact = match contacts::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(read_deleted_contact == None);

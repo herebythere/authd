@@ -6,7 +6,7 @@ use crate::errors::SqliteInterfaceError;
 fn get_entry_from_row(row: &Row) -> Result<Session, RusqliteError> {
     Ok(Session {
         id: row.get(0)?,
-		organization_id: row.get(1)?,
+        organization_id: row.get(1)?,
         people_id: row.get(2)?,
         token: row.get(3)?,
         prev_window_count: row.get(4)?,
@@ -19,15 +19,14 @@ fn get_entry_from_row(row: &Row) -> Result<Session, RusqliteError> {
 pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
     let results = conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
-			id INTEGER NOT NULL,
+            id INTEGER PRIMARY KEY,
 			organization_id INTEGER NOT NULL,
             people_id INTEGER NOT NULL,
             token INTEGER NOT NULL,
 			prev_window_count INTEGER NOT NULL,
 			window_count INTEGER NOT NULL,
 			updated_at INTEGER NOT NULL,
-			deleted_at INTEGER NOT NULL,
-			PRIMARY KEY (people_id, action_kind_id)
+			deleted_at INTEGER
         )",
         (),
     );
@@ -42,10 +41,8 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
 pub struct CreateParams {
     pub session_id: i64,
     pub organization_id: i64,
-	pub people_id: i64,
+    pub people_id: i64,
     pub token: i64,
-    pub prev_window_count: i64,
-    pub window_count: i64,
     pub current_timestamp: i64,
 }
 
@@ -58,7 +55,7 @@ pub fn create(
         INSERT INTO sessions
             (id, organization_id, people_id, token, prev_window_count, window_count, updated_at)
         VALUES
-            (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            (?1, ?2, ?3, ?4, 0, 1, ?5)
         RETURNING
             *
     ",
@@ -71,10 +68,8 @@ pub fn create(
         (
             params.session_id,
             params.organization_id,
-			params.people_id,
+            params.people_id,
             params.token,
-            params.prev_window_count,
-            params.window_count,
             params.current_timestamp,
         ),
         get_entry_from_row,
@@ -90,7 +85,7 @@ pub fn create(
     }
 
     Err(SqliteInterfaceError::Custom(
-        "failed to create people".to_string(),
+        "failed to create session".to_string(),
     ))
 }
 
@@ -151,23 +146,19 @@ pub fn read(
     Ok(entries)
 }
 
-
 pub struct IncrementRateLimitParams {
-    pub organization_id: i64,
     pub window_length_ms: i64,
     pub session_id: i64,
     pub current_timestamp: i64,
 }
 
-// INSERT INTO users(username,score) VALUES('Johnny', 388)
-// ON CONFLICT(username) DO UPDATE SET score = '388';
 pub fn increment_rate_limit(
     conn: &mut Connection,
     params: &IncrementRateLimitParams,
 ) -> Result<Session, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
-        UPDATE OR IGNORE
+        UPDATE sessions
             SET
                 window_count =
                     CASE
@@ -208,13 +199,17 @@ pub fn increment_rate_limit(
     };
 
     if let Some(entry_maybe) = entry_iter.next() {
+        println!("{:?}", &entry_maybe);
+
         if let Ok(entry) = entry_maybe {
+            println!("{:?}", &entry);
+
             return Ok(entry);
         }
     }
 
     Err(SqliteInterfaceError::Custom(
-        "failed to rate-limit ip address".to_string(),
+        "failed to rate-limit session".to_string(),
     ))
 }
 

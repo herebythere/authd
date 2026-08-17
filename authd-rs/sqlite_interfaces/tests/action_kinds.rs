@@ -27,13 +27,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // read by title
     let read_action_kind = match action_kinds::read_by_title(&mut conn, "signups") {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(Some(action_kind.clone()) == read_action_kind);
@@ -41,7 +41,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     // read by id
     let read_action_kind_by_id = match action_kinds::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // read by id
@@ -54,7 +54,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(read_action_kind_by_id.clone() != patch_action_kind);
@@ -68,7 +68,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     match delete_action_kind {
@@ -89,13 +89,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // confirm nothing is returned
     let read_deleted_action_kind = match action_kinds::read_by_title(&mut conn, "email") {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(read_deleted_action_kind == None);

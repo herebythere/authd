@@ -27,13 +27,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // read by title
     let read_organization = match organizations::read_by_title(&mut conn, "sqlite_tests") {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(Some(organization.clone()) == read_organization);
@@ -41,7 +41,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     // read by id
     let read_organization_by_id = match organizations::read_by_id(&mut conn, 0) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // read
@@ -53,7 +53,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(1 == read_organizations.len());
@@ -69,7 +69,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     assert!(read_organization_by_id.clone() != patch_organization);
@@ -83,7 +83,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     match delete_organization {
@@ -104,14 +104,14 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
     ) {
         Ok(ck) => ck,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
 
     // confirm nothing is returned
     let read_deleted_organization =
         match organizations::read_by_title(&mut conn, "more_sqlite_tests") {
             Ok(ck) => ck,
-            Err(e) => return Err(e.into()),
+            Err(e) => return Err(e),
         };
 
     assert!(read_deleted_organization == None);
