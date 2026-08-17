@@ -24,7 +24,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &CreateParams {
             organization_id: 0,
             people_id: 1,
-            session_id: 0,
+            session_id: 2,
             token: 1234567,
             current_timestamp: 0,
         },
@@ -33,7 +33,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e),
     };
 
-    let read_session = match sessions::read(
+    let read_sessions = match sessions::read(
         &mut conn,
         &ReadParams {
             organization_id: 0,
@@ -47,11 +47,14 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e),
     };
 
+    assert!(1 == read_sessions.len());
+    assert!(read_sessions.get(0) == Some(&Ok(session.clone())));
+
     // ratelimit
     let rate_limited_session = match sessions::increment_rate_limit(
         &mut conn,
         &IncrementRateLimitParams {
-            session_id: 1234567,
+            session_id: 2,
             current_timestamp: 5,
             window_length_ms: 10,
         },
@@ -60,39 +63,22 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e),
     };
 
-    // assert!(1 == ip_addresses.len());
-    // assert!(ip_addresses.get(0) == Some(&Ok(ip_address.clone())));
+    assert!(rate_limited_session.window_count == session.window_count + 1);
 
-    // let ip_address_updated = match sessions::increment_rate_limit(
-    //     &mut conn,
-    //     &IncrementRateLimitParams {
-    //         organization_id: 0,
-    //         ip_address: "127.0.0.1".to_string(),
-    //         current_timestamp: 8,
-    //         window_length_ms: 10,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e),
-    // };
+    let rate_limited_session_again = match sessions::increment_rate_limit(
+        &mut conn,
+        &IncrementRateLimitParams {
+            session_id: 2,
+            current_timestamp: 16,
+            window_length_ms: 10,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
 
-    // assert!(ip_address_updated.window_count == ip_address.window_count + 1);
-
-    // let ip_address_updated_again = match sessions::increment_rate_limit(
-    //     &mut conn,
-    //     &IncrementRateLimitParams {
-    //         organization_id: 0,
-    //         ip_address: "127.0.0.1".to_string(),
-    //         current_timestamp: 16,
-    //         window_length_ms: 10,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e),
-    // };
-
-    // assert!(ip_address_updated_again.window_count == 1);
-    // assert!(ip_address_updated_again.prev_window_count == 2);
+    assert!(rate_limited_session_again.window_count == 1);
+    assert!(rate_limited_session_again.prev_window_count == 2);
 
     // let ip_address_new_window = match sessions::increment_rate_limit(
     //     &mut conn,

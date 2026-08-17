@@ -178,6 +178,8 @@ pub fn increment_rate_limit(
                     END
 			WHERE
 				id = ?1
+                AND
+                deleted_at IS NULL
         RETURNING
             *
     ",
@@ -192,6 +194,56 @@ pub fn increment_rate_limit(
             params.current_timestamp,
             params.window_length_ms,
         ),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    if let Some(entry_maybe) = entry_iter.next() {
+        println!("{:?}", &entry_maybe);
+
+        if let Ok(entry) = entry_maybe {
+            println!("{:?}", &entry);
+
+            return Ok(entry);
+        }
+    }
+
+    Err(SqliteInterfaceError::Custom(
+        "failed to rate-limit session".to_string(),
+    ))
+}
+
+// Soft Delete
+pub struct DeleteParams {
+    pub session_id: i64,
+    pub current_timestamp: i64,
+}
+
+pub fn delete(
+    conn: &mut Connection,
+    params: &DeleteParams,
+) -> Result<Session, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        UPDATE sessions
+            SET
+                deleted_at = ?2
+			WHERE
+				id = ?1
+                AND
+                deleted_at IS NULL
+        RETURNING
+            *
+    ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let mut entry_iter = match stmt.query_map(
+        (params.session_id, params.current_timestamp),
         get_entry_from_row,
     ) {
         Ok(entry_iter) => entry_iter,
