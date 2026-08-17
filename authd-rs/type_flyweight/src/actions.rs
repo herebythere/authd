@@ -11,7 +11,7 @@ pub struct ActionKind {
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct ActionTicket {
     pub id: i64,
-    pub organization_id: Option<i64>,
+    pub organization_id: i64,
     pub people_id: Option<i64>,
     pub action_kind_id: i64,
     pub token: i64,
@@ -22,11 +22,10 @@ pub struct ActionTicket {
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct ActionRateLimit {
-    pub id: i64,
-    pub people_id: Option<i64>,
-    pub action_kind_id: String,
+    pub organization_id: i64,
+    pub people_id: i64,
+    pub action_kind_id: i64,
     pub prev_window_count: i64,
     pub window_count: i64,
     pub updated_at: i64,
-    pub deleted_at: Option<i64>,
 }

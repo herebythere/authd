@@ -186,7 +186,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &DangerouslyDeleteParams {
             organization_id: 0,
             current_timestamp: 139,
-            window_length_ms: 100,
+            window_length_ms: 10,
         },
     ) {
         Ok(ck) => ck,
@@ -198,7 +198,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &mut conn,
         &ReadParams {
             organization_id: 0,
-            current_timestamp: 26,
+            current_timestamp: 140,
             window_length_ms: 10,
             limit: 16,
             offset: 0,

@@ -17,7 +17,7 @@ fn get_entry_from_row(row: &Row) -> Result<Session, RusqliteError> {
 }
 
 pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
-    let results = conn.execute(
+    match conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY,
 			organization_id INTEGER NOT NULL,
@@ -29,13 +29,10 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
 			deleted_at INTEGER
         )",
         (),
-    );
-
-    if let Err(e) = results {
-        return Err(SqliteInterfaceError::Rusqlite(e));
+    ) {
+        Ok(stmt) => Ok(()),
+        Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
-
-    Ok(())
 }
 
 pub struct CreateParams {
@@ -262,11 +259,7 @@ pub fn increment_rate_limit(
     };
 
     if let Some(entry_maybe) = entry_iter.next() {
-        println!("{:?}", &entry_maybe);
-
         if let Ok(entry) = entry_maybe {
-            println!("{:?}", &entry);
-
             return Ok(Some(entry));
         }
     }
@@ -336,31 +329,22 @@ pub fn dangerously_delete(
     conn: &mut Connection,
     params: &DangerouslyDeleteParams,
 ) -> Result<(), SqliteInterfaceError> {
-    let mut stmt = match conn.prepare(
+    match conn.execute(
         "
         DELETE FROM
             sessions
         WHERE
 			organization_id = ?1
 			AND
-			(?2 * 2) < (?3 - updated_at)
+			(2 * ?2) < (?3 - updated_at)
         ",
-    ) {
-        Ok(stmt) => stmt,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    let _ = match stmt.query_map(
         (
             params.organization_id,
             params.window_length_ms,
             params.current_timestamp,
         ),
-        get_entry_from_row,
     ) {
-        Ok(entry_iter) => entry_iter,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    Ok(())
+        Ok(stmt) => Ok(()),
+        Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
+    }
 }

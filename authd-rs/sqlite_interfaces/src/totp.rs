@@ -17,7 +17,7 @@ fn get_entry_from_row(row: &Row) -> Result<Totp, RusqliteError> {
 }
 
 pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
-    let results = conn.execute(
+    match conn.execute(
         "CREATE TABLE IF NOT EXISTS totp (
             id INTEGER PRIMARY KEY,
 			organization_id INTEGER NOT NULL,
@@ -29,13 +29,10 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
             deleted_at INTEGER
         )",
         (),
-    );
-
-    if let Err(e) = results {
-        return Err(SqliteInterfaceError::Rusqlite(e));
+    ) {
+        Ok(stmt) => Ok(()),
+        Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
-
-    Ok(())
 }
 
 pub struct CreateParams {
