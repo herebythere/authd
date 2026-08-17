@@ -364,3 +364,30 @@ pub fn dangerously_delete(
 
     Ok(())
 }
+
+// dangerously delete
+pub fn dangerously_delete(
+    conn: &mut Connection,
+    params: &DangerouslyDeleteParams,
+) -> Result<(), SqliteInterfaceError> {
+    match conn.execute(
+        "
+        DELETE FROM
+            rate_limit_settings
+        WHERE
+			deleted_at IS NOT NULL
+            AND
+			organization_id = ?1
+			AND
+			?2 < (?3 - updated_at)
+        ",
+        (
+            params.organization_id,
+            params.window_length_ms,
+            params.current_timestamp,
+        ),
+    ) {
+        Ok(stmt) => Ok(()),
+        Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
+    }
+}

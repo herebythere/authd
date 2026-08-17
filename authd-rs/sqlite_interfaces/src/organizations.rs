@@ -274,11 +274,12 @@ pub struct DangerouslyDeleteParams {
     pub current_timestamp: i64,
 }
 
+// dangerously delete
 pub fn dangerously_delete(
     conn: &mut Connection,
     params: &DangerouslyDeleteParams,
 ) -> Result<(), SqliteInterfaceError> {
-    let mut stmt = match conn.prepare(
+    match conn.execute(
         "
         DELETE FROM
             organizations
@@ -287,18 +288,9 @@ pub fn dangerously_delete(
             AND
 			?1 < (?2 - deleted_at)
         ",
-    ) {
-        Ok(stmt) => stmt,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    let _ = match stmt.query_map(
         (params.window_length_ms, params.current_timestamp),
-        get_entry_from_row,
     ) {
-        Ok(entry_iter) => entry_iter,
-        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
-    };
-
-    Ok(())
+        Ok(stmt) => Ok(()),
+        Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
+    }
 }
