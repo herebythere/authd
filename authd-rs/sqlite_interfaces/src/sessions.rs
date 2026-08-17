@@ -146,6 +146,67 @@ pub fn read(
     Ok(entries)
 }
 
+pub struct ReadByPersonParams {
+    pub organization_id: i64,
+    pub people_id: i64,
+    pub window_length_ms: i64,
+    pub current_timestamp: i64,
+    pub offset: i64,
+    pub limit: i64,
+}
+
+pub fn read_by_person(
+    conn: &mut Connection,
+    params: &ReadByPersonParams,
+) -> Result<Vec<Result<Session, SqliteInterfaceError>>, SqliteInterfaceError> {
+    let mut stmt = match conn.prepare(
+        "
+        SELECT
+            *
+        FROM
+            sessions
+        WHERE
+            organization_id = ?1
+            AND
+            people_id = ?2
+            AND
+			?3 * 2 < ?4 - updated_at 
+        LIMIT
+            ?5
+        OFFSET
+            ?6
+        ",
+    ) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let entry_iter = match stmt.query_map(
+        (
+            params.organization_id,
+            params.people_id,
+            params.window_length_ms,
+            params.current_timestamp,
+            params.limit,
+            params.offset,
+        ),
+        get_entry_from_row,
+    ) {
+        Ok(entry_iter) => entry_iter,
+        Err(e) => return Err(SqliteInterfaceError::Rusqlite(e)),
+    };
+
+    let mut entries: Vec<Result<Session, SqliteInterfaceError>> = Vec::new();
+    for entry in entry_iter {
+        match entry {
+            Ok(ntry) => entries.push(Ok(ntry)),
+            Err(e) => entries.push(Err(SqliteInterfaceError::Rusqlite(e))),
+        }
+    }
+
+    Ok(entries)
+}
+
 pub struct IncrementRateLimitParams {
     pub window_length_ms: i64,
     pub session_id: i64,
@@ -155,7 +216,7 @@ pub struct IncrementRateLimitParams {
 pub fn increment_rate_limit(
     conn: &mut Connection,
     params: &IncrementRateLimitParams,
-) -> Result<Session, SqliteInterfaceError> {
+) -> Result<Option<Session>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
         UPDATE sessions
@@ -206,13 +267,11 @@ pub fn increment_rate_limit(
         if let Ok(entry) = entry_maybe {
             println!("{:?}", &entry);
 
-            return Ok(entry);
+            return Ok(Some(entry));
         }
     }
 
-    Err(SqliteInterfaceError::Custom(
-        "failed to rate-limit session".to_string(),
-    ))
+    Ok(None)
 }
 
 // Soft Delete

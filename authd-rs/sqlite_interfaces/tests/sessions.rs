@@ -2,7 +2,8 @@ use rusqlite::{Connection, Result};
 use sqlite_interfaces::ip_addresses;
 use sqlite_interfaces::sessions;
 use sqlite_interfaces::sessions::{
-    CreateParams, DangerouslyDeleteParams, IncrementRateLimitParams, ReadParams,
+    CreateParams, DangerouslyDeleteParams, DeleteParams, IncrementRateLimitParams,
+    ReadByPersonParams, ReadParams,
 };
 
 use sqlite_interfaces::errors::SqliteInterfaceError;
@@ -33,6 +34,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e),
     };
 
+    // read by people
     let read_sessions = match sessions::read(
         &mut conn,
         &ReadParams {
@@ -50,6 +52,25 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     assert!(1 == read_sessions.len());
     assert!(read_sessions.get(0) == Some(&Ok(session.clone())));
 
+    // read by org
+    let read_sessions_by_person = match sessions::read_by_person(
+        &mut conn,
+        &ReadByPersonParams {
+            organization_id: 0,
+            people_id: 1,
+            current_timestamp: 26,
+            window_length_ms: 10,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
+
+    assert!(1 == read_sessions_by_person.len());
+    assert!(read_sessions_by_person.get(0) == Some(&Ok(session.clone())));
+
     // ratelimit
     let rate_limited_session = match sessions::increment_rate_limit(
         &mut conn,
@@ -59,13 +80,20 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
             window_length_ms: 10,
         },
     ) {
-        Ok(ck) => ck,
+        Ok(ck) => match ck {
+            Some(sesh) => sesh,
+            _ => {
+                return Err(SqliteInterfaceError::Custom(
+                    "failed to find a session to rate-limit".to_string(),
+                ))
+            }
+        },
         Err(e) => return Err(e),
     };
 
     assert!(rate_limited_session.window_count == session.window_count + 1);
 
-    let rate_limited_session_again = match sessions::increment_rate_limit(
+    let rate_limited_session_next_window = match sessions::increment_rate_limit(
         &mut conn,
         &IncrementRateLimitParams {
             session_id: 2,
@@ -73,40 +101,114 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
             window_length_ms: 10,
         },
     ) {
+        Ok(ck) => match ck {
+            Some(sesh) => sesh,
+            _ => {
+                return Err(SqliteInterfaceError::Custom(
+                    "failed to find a session to rate-limit".to_string(),
+                ))
+            }
+        },
+        Err(e) => return Err(e),
+    };
+
+    assert!(rate_limited_session_next_window.window_count == 1);
+    assert!(rate_limited_session_next_window.prev_window_count == 2);
+
+    let session_new_window = match sessions::increment_rate_limit(
+        &mut conn,
+        &IncrementRateLimitParams {
+            session_id: 2,
+            current_timestamp: 37,
+            window_length_ms: 10,
+        },
+    ) {
+        Ok(ck) => match ck {
+            Some(sesh) => sesh,
+            _ => {
+                return Err(SqliteInterfaceError::Custom(
+                    "failed to find a session to rate-limit".to_string(),
+                ))
+            }
+        },
+        Err(e) => return Err(e),
+    };
+
+    assert!(session_new_window.window_count == 1);
+    assert!(session_new_window.prev_window_count == 0);
+
+    // soft delete (logout)
+    let _ = match sessions::delete(
+        &mut conn,
+        &DeleteParams {
+            session_id: 2,
+            current_timestamp: 38,
+        },
+    ) {
         Ok(ck) => ck,
         Err(e) => return Err(e),
     };
 
-    assert!(rate_limited_session_again.window_count == 1);
-    assert!(rate_limited_session_again.prev_window_count == 2);
+    let expired_session = match sessions::increment_rate_limit(
+        &mut conn,
+        &IncrementRateLimitParams {
+            session_id: 2,
+            current_timestamp: 39,
+            window_length_ms: 10,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
 
-    // let ip_address_new_window = match sessions::increment_rate_limit(
-    //     &mut conn,
-    //     &IncrementRateLimitParams {
-    //         organization_id: 0,
-    //         ip_address: "127.0.0.1".to_string(),
-    //         current_timestamp: 37,
-    //         window_length_ms: 10,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e),
-    // };
+    assert!(None == expired_session);
 
-    // assert!(ip_address_new_window.window_count == 1);
-    // assert!(ip_address_new_window.prev_window_count == 0);
+    // read deleted
+    let read_dangerously_deleted = match sessions::read(
+        &mut conn,
+        &ReadParams {
+            organization_id: 0,
+            current_timestamp: 26,
+            window_length_ms: 10,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
 
-    // let _ = match sessions::dangerously_delete(
-    //     &mut conn,
-    //     &DangerouslyDeleteParams {
-    //         organization_id: 0,
-    //         current_timestamp: 138,
-    //         window_length_ms: 100,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e),
-    // };
+    assert!(0 == read_dangerously_deleted.len());
+
+    // dangerously delete (time delay)
+    let _ = match sessions::dangerously_delete(
+        &mut conn,
+        &DangerouslyDeleteParams {
+            organization_id: 0,
+            current_timestamp: 139,
+            window_length_ms: 100,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
+
+    // read deleted
+    let read_dangerously_deleted = match sessions::read(
+        &mut conn,
+        &ReadParams {
+            organization_id: 0,
+            current_timestamp: 26,
+            window_length_ms: 10,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
+
+    assert!(0 == read_dangerously_deleted.len());
 
     Ok(())
 }
