@@ -105,9 +105,13 @@ pub fn read(
         FROM
             sessions
         WHERE
+            deleted_at IS NULL
+            AND
             organization_id = ?1
             AND
-			?2 * 2 < ?3 - updated_at 
+            updated_at < ?3
+            AND
+			(?2 * 2) < (?3 - updated_at)
         LIMIT
             ?4
         OFFSET
@@ -163,11 +167,15 @@ pub fn read_by_person(
         FROM
             sessions
         WHERE
+            deleted_at IS NULL
+            AND
             organization_id = ?1
             AND
             people_id = ?2
             AND
-			?3 * 2 < ?4 - updated_at 
+            updated_at < ?3
+            AND
+			(?3 * 2) < (?4 - updated_at) 
         LIMIT
             ?5
         OFFSET
@@ -317,14 +325,13 @@ pub fn delete(
     ))
 }
 
-// paginated read
+// DANGEROUSLY_DELETE
 pub struct DangerouslyDeleteParams {
     pub organization_id: i64,
     pub window_length_ms: i64,
     pub current_timestamp: i64,
 }
 
-// dangerously delete
 pub fn dangerously_delete(
     conn: &mut Connection,
     params: &DangerouslyDeleteParams,
@@ -336,7 +343,11 @@ pub fn dangerously_delete(
         WHERE
 			organization_id = ?1
 			AND
-			(2 * ?2) < (?3 - updated_at)
+            deleted_at IS NOT NULL
+            AND
+            updated_at < ?3
+            AND
+			?2 < (?3 - updated_at)
         ",
         (
             params.organization_id,

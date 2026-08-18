@@ -73,7 +73,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
             assert!(totp.id == del_totp.id);
             assert!(del_totp.deleted_at != None);
         }
-        _ => assert!(false, "None returned after delete organization"),
+        _ => assert!(false, "None returned after delete totp"),
     }
 
     let _ = match totp::dangerously_delete(
