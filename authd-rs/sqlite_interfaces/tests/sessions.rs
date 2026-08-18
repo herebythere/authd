@@ -39,7 +39,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &mut conn,
         &ReadParams {
             organization_id: 0,
-            current_timestamp: 26,
+            current_timestamp: 10,
             window_length_ms: 10,
             limit: 16,
             offset: 0,
@@ -76,7 +76,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &mut conn,
         &IncrementRateLimitParams {
             session_id: 2,
-            current_timestamp: 5,
+            current_timestamp: 8,
             window_length_ms: 10,
         },
     ) {
@@ -90,6 +90,8 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         },
         Err(e) => return Err(e),
     };
+
+    println!("{:?}", rate_limited_session);
 
     assert!(rate_limited_session.window_count == session.window_count + 1);
 

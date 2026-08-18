@@ -111,7 +111,7 @@ pub fn read(
             AND
             updated_at < ?3
             AND
-			(?2 * 2) < (?3 - updated_at)
+			(?3 - updated_at) < (2 * ?2)
         LIMIT
             ?4
         OFFSET
@@ -259,8 +259,8 @@ pub fn increment_rate_limit(
     let mut entry_iter = match stmt.query_map(
         (
             params.session_id,
-            params.current_timestamp,
             params.window_length_ms,
+            params.current_timestamp,
         ),
         get_entry_from_row,
     ) {
