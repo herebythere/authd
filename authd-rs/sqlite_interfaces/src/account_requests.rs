@@ -58,7 +58,7 @@ pub fn read(
             AND
             updated_at < ?3
             AND
-			?2 - updated_at < ?3
+			?3 - updated_at < ?2
         LIMIT
             ?4
         OFFSET
@@ -72,8 +72,8 @@ pub fn read(
     let entry_iter = match stmt.query_map(
         (
             params.organization_id,
-            params.current_timestamp,
             params.window_length_ms,
+            params.current_timestamp,
             params.limit,
             params.offset,
         ),

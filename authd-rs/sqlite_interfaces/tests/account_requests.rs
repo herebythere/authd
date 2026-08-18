@@ -104,7 +104,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &ReadParams {
             organization_id: 2,
             window_length_ms: 100,
-            current_timestamp: 118,
+            current_timestamp: 117,
             limit: 16,
             offset: 0,
         },
@@ -113,6 +113,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e),
     };
 
+    println!("{:?}", read_deleted_account_requests);
     assert!(0 == read_deleted_account_requests.len());
 
     Ok(())
