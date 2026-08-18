@@ -56,9 +56,9 @@ pub fn read(
         WHERE
             organization_id = ?1
             AND
-            updated_at < ?3
+            updated_at <= ?3
             AND
-			?3 - updated_at < ?2
+			?3 - updated_at <= ?2
         LIMIT
             ?4
         OFFSET
@@ -116,23 +116,21 @@ pub fn increment_rate_limit(
 		ON CONFLICT(contact_kind_id, contact_content) DO UPDATE
             SET
                 token = CASE
-                    WHEN
-                        completed_at IS NULL AND
-                        updated_at < ?5 AND
-                        ?6 < (?5 - updated_at)
+                        WHEN
+                            ?6 < (?5 - updated_at)
                         THEN ?2
                         ELSE token
                     END,
                 updated_at = CASE
-                    WHEN
-                        completed_at IS NULL AND
-                        updated_at < ?5 AND
-                        ?6 < (?5 - updated_at)
+                        WHEN
+                            ?6 < (?5 - updated_at)
                         THEN ?5
                         ELSE updated_at
                     END
             WHERE
-                updated_at < ?5
+                completed_at IS NULL
+                AND
+                updated_at <= ?5
         RETURNING
             *
     ",
@@ -198,7 +196,7 @@ pub fn dangerously_delete(
             params.current_timestamp,
         ),
     ) {
-        Ok(stmt) => Ok(()),
+        Ok(_) => Ok(()),
         Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
 }

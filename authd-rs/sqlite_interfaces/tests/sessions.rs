@@ -1,5 +1,4 @@
 use rusqlite::{Connection, Result};
-use sqlite_interfaces::ip_addresses;
 use sqlite_interfaces::sessions;
 use sqlite_interfaces::sessions::{
     CreateParams, DangerouslyDeleteParams, DeleteParams, IncrementRateLimitParams,

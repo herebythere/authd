@@ -31,7 +31,7 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
         )",
         (),
     ) {
-        Ok(stmt) => Ok(()),
+        Ok(_) => Ok(()),
         Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
 }
@@ -351,7 +351,7 @@ pub fn dangerously_delete(
             params.current_timestamp,
         ),
     ) {
-        Ok(stmt) => Ok(()),
+        Ok(_) => Ok(()),
         Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
 }

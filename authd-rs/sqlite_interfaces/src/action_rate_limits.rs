@@ -27,7 +27,7 @@ pub fn create_table(conn: &mut Connection) -> Result<(), SqliteInterfaceError> {
         )",
         (),
     ) {
-        Ok(stmt) => Ok(()),
+        Ok(_) => Ok(()),
         Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
 }
@@ -53,7 +53,7 @@ pub fn read(
         WHERE
             organization_id = ?1
             AND
-            updated_at < ?3
+            updated_at <= ?3
             AND
 			(?3 - updated_at) < (?2 * 2)
         LIMIT
@@ -115,7 +115,7 @@ pub fn read_by_person(
             AND
             people_id = ?2
             AND
-            updated_at < ?4
+            updated_at <= ?4
             AND
 			(?4 - updated_at) < (?3 * 2)
         LIMIT
@@ -252,7 +252,7 @@ pub fn dangerously_delete(
             params.current_timestamp,
         ),
     ) {
-        Ok(stmt) => Ok(()),
+        Ok(_) => Ok(()),
         Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
 }

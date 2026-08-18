@@ -54,7 +54,9 @@ pub fn read(
         WHERE
             organization_id = ?1
             AND
-			?2 * 2 < ?3 - updated_at 
+            updated_at < ?3
+            AND
+			(?2 * 2) < (?3 - updated_at)
         LIMIT
             ?4
         OFFSET
@@ -128,7 +130,7 @@ pub fn increment_rate_limit(
                         ELSE updated_at
                     END
             WHERE
-                updated_at < ?3
+                updated_at <= ?3
         RETURNING
             *
     ",
@@ -190,7 +192,7 @@ pub fn dangerously_delete(
             params.current_timestamp,
         ),
     ) {
-        Ok(stmt) => Ok(()),
+        Ok(_) => Ok(()),
         Err(e) => Err(SqliteInterfaceError::Rusqlite(e)),
     }
 }
