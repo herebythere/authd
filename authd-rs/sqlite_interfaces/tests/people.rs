@@ -81,7 +81,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
             id: 0,
             internal: None,
             multi_factor_required: Some(false),
-            current_timestamp: 10,
+            current_timestamp: 11,
         },
     ) {
         Ok(ck) => ck,

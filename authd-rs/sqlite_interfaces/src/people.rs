@@ -135,6 +135,7 @@ pub fn read(
     Ok(entries)
 }
 
+// Might need org?
 pub fn read_by_id(conn: &mut Connection, id: i64) -> Result<Option<Person>, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
@@ -174,6 +175,7 @@ pub struct PatchParams {
     pub current_timestamp: i64,
 }
 
+// MIght need <= ?3
 pub fn patch(
     conn: &mut Connection,
     params: &PatchParams,
@@ -194,9 +196,11 @@ pub fn patch(
                     END,
 				updated_at = ?3
             WHERE
-                deleted_at IS NULL
-                AND
                 id = ?4
+                AND
+                updated_at < ?3
+                AND
+                deleted_at IS NULL
         RETURNING
             *
         ",
@@ -250,6 +254,8 @@ pub fn update_password(
                 deleted_at IS NULL
                 AND
                 id = ?3
+                AND
+                updated_at < ?2
         RETURNING
             *
         ",
@@ -295,7 +301,12 @@ pub fn delete(
         "
         UPDATE OR IGNORE people
             SET deleted_at = ?1
-            WHERE id = ?2
+            WHERE
+                id = ?2
+                AND
+                updated_at < ?1
+                AND
+                deleted_at IS NULL
         RETURNING
             *
         ",
@@ -341,6 +352,8 @@ pub fn dangerously_delete(
             AND
 			organization_id = ?1
 			AND
+            updated_at < ?3
+            AND
 			?2 < (?3 - deleted_at)
         ",
         (
