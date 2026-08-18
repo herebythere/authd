@@ -53,7 +53,9 @@ pub fn read(
         WHERE
             organization_id = ?1
             AND
-			(?2 * 2) < (?3 - updated_at) 
+            updated_at < ?3
+            AND
+			(?3 - updated_at) < (?2 * 2)
         LIMIT
             ?4
         OFFSET
@@ -113,7 +115,9 @@ pub fn read_by_person(
             AND
             people_id = ?2
             AND
-			(?3 * 2) < (?4 - updated_at)
+            updated_at < ?4
+            AND
+			(?4 - updated_at) < (?3 * 2)
         LIMIT
             ?5
         OFFSET
@@ -186,6 +190,8 @@ pub fn increment_rate_limit(
                         WHEN ?5 < (?4 - updated_at) THEN ?4
                         ELSE updated_at
                     END
+            WHERE
+                updated_at < ?4
         RETURNING
             *
     ",

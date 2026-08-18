@@ -240,7 +240,10 @@ pub fn delete(
         "
         UPDATE OR IGNORE api_keys
             SET deleted_at = ?1
-            WHERE id = ?2
+            WHERE
+                deleted_at IS NULL
+                AND
+                id = ?2
         RETURNING
             *
         ",
@@ -286,6 +289,8 @@ pub fn dangerously_delete(
             AND
             organization_id = ?1
 			AND
+            deleted_at < ?3
+            AND
 			?2 < (?3 - deleted_at)
         ",
         (

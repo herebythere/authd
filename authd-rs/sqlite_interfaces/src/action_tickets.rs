@@ -243,7 +243,12 @@ pub fn delete(
         "
         UPDATE OR IGNORE actions
             SET deleted_at = ?1
-            WHERE id = ?2
+            WHERE
+                deleted_at IS NULL
+                AND
+                deleted_at < ?1
+                AND
+                id = ?2
         RETURNING
             *
         ",

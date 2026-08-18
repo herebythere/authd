@@ -175,7 +175,7 @@ pub fn read_by_person(
             AND
             updated_at < ?3
             AND
-			(?3 * 2) < (?4 - updated_at) 
+			(?3 - updated_at) < (?4 * 2)
         LIMIT
             ?5
         OFFSET
@@ -190,8 +190,8 @@ pub fn read_by_person(
         (
             params.organization_id,
             params.people_id,
-            params.window_length_ms,
             params.current_timestamp,
+            params.window_length_ms,
             params.limit,
             params.offset,
         ),
@@ -228,22 +228,24 @@ pub fn increment_rate_limit(
             SET
                 window_count =
                     CASE
-                        WHEN ?3 < (?2 - updated_at) THEN 1
+                        WHEN ?2 < (?3 - updated_at) THEN 1
                         ELSE window_count + 1
                     END,
                 prev_window_count =
                     CASE
-                        WHEN (2 * ?3) < (?2 - updated_at) THEN 0
-                        WHEN ?3 < (?2 - updated_at) THEN window_count 
+                        WHEN (2 * ?2) < (?3 - updated_at) THEN 0
+                        WHEN ?2 < (?3 - updated_at) THEN window_count 
                         ELSE prev_window_count
                     END,
                 updated_at =
                     CASE
-                        WHEN ?3 < (?2 - updated_at) THEN ?2
+                        WHEN ?2 < (?3 - updated_at) THEN ?3
                         ELSE updated_at
                     END
 			WHERE
 				id = ?1
+                AND
+                updated_at < ?3
                 AND
                 deleted_at IS NULL
         RETURNING

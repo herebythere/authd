@@ -205,6 +205,8 @@ pub fn patch(
             WHERE
                 deleted_at IS NULL
                 AND
+                updated_at < ?2
+                AND
                 id = ?3
         RETURNING
             *
@@ -247,7 +249,12 @@ pub fn delete(
         "
         UPDATE OR IGNORE action_kinds
             SET deleted_at = ?1
-            WHERE id = ?2
+            WHERE
+                deleted_at IS NULL
+                AND
+                id = ?2
+                AND
+                updated_at < ?1
         RETURNING
             *
         ",
@@ -289,6 +296,8 @@ pub fn dangerously_delete(
             action_kinds
         WHERE
             deleted_at IS NOT NULL
+            AND
+            deleted_at < ?2
             AND
 			?1 < (?2 - deleted_at)
         ",

@@ -127,6 +127,8 @@ pub fn increment_rate_limit(
                         WHEN ?4 < (?3 - updated_at) THEN ?3
                         ELSE updated_at
                     END
+            WHERE
+                updated_at < ?3
         RETURNING
             *
     ",
@@ -178,7 +180,9 @@ pub fn dangerously_delete(
         WHERE
 			organization_id = ?1
 			AND
-			(2 * ?2) < (?3 - updated_at)
+            updated_at < ?3
+            AND
+			?2 < (?3 - updated_at)
         ",
         (
             params.organization_id,

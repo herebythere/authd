@@ -58,7 +58,7 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         &ReadByPersonParams {
             organization_id: 0,
             people_id: 1,
-            current_timestamp: 26,
+            current_timestamp: 5,
             window_length_ms: 10,
             limit: 16,
             offset: 0,

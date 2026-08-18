@@ -56,6 +56,8 @@ pub fn read(
         WHERE
             organization_id = ?1
             AND
+            updated_at < ?3
+            AND
 			?2 - updated_at < ?3
         LIMIT
             ?4
@@ -129,6 +131,8 @@ pub fn increment_rate_limit(
                         THEN ?5
                         ELSE updated_at
                     END
+            WHERE
+                updated_at < ?5
         RETURNING
             *
     ",
@@ -184,6 +188,8 @@ pub fn dangerously_delete(
         WHERE
 			organization_id = ?1
 			AND
+            updated_at < ?3
+            AND
 			?2 < (?3 - updated_at)
         ",
         (
