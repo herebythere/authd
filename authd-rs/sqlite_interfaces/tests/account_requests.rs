@@ -34,81 +34,86 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
         Err(e) => return Err(e),
     };
 
-    // let account_request_again = match account_requests::increment_rate_limit(
-    //     &mut conn,
-    //     &IncrementRateLimitParams {
-    //         organization_id: 2,
-    //         token: 1234567,
-    //         contact_kind_id: 4,
-    //         content: "we're normal men".to_string(),
-    //         window_length_ms: 10,
-    //         current_timestamp: 6,
-    //     },
-    // ) {
-    //     Ok(account_request) => account_request,
-    //     Err(e) => return Err(e),
-    // };
+    let account_request_again = match account_requests::increment_rate_limit(
+        &mut conn,
+        &IncrementRateLimitParams {
+            organization_id: 2,
+            token: 2345678,
+            contact_kind_id: 4,
+            contact_content: "we're normal men".to_string(),
+            window_length_ms: 10,
+            current_timestamp: 6,
+        },
+    ) {
+        Ok(account_request) => account_request,
+        Err(e) => return Err(e),
+    };
 
-    // let account_request_new_window = match account_requests::increment_rate_limit(
-    //     &mut conn,
-    //     &IncrementRateLimitParams {
-    //         organization_id: 2,
-    //         token: 1234567,
-    //         contact_kind_id: 4,
-    //         content: "we're normal men".to_string(),
-    //         window_length_ms: 10,
-    //         current_timestamp: 17,
-    //     },
-    // ) {
-    //     Ok(account_request) => account_request,
-    //     Err(e) => return Err(e),
-    // };
+    assert!(1234567 == account_request.token);
+    assert!(1234567 == account_request_again.token);
 
-    // // read
-    // let read_account_requests = match account_requests::read(
-    //     &mut conn,
-    //     &ReadParams {
-    //         organization_id: 2,
-    //         window_length_ms: 10,
-    //         current_timestamp: 17,
-    //         limit: 16,
-    //         offset: 0,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e),
-    // };
+    let account_request_new_window = match account_requests::increment_rate_limit(
+        &mut conn,
+        &IncrementRateLimitParams {
+            organization_id: 2,
+            token: 3456789,
+            contact_kind_id: 4,
+            contact_content: "we're normal men".to_string(),
+            window_length_ms: 10,
+            current_timestamp: 16,
+        },
+    ) {
+        Ok(account_request) => account_request,
+        Err(e) => return Err(e),
+    };
 
-    // assert!(1 == read_account_requests.len());
-    // assert!(read_account_requests.get(0) == Some(&Ok(account_request.clone())));
+    assert!(3456789 == account_request_new_window.token);
 
-    // let _ = match account_requests::dangerously_delete(
-    //     &mut conn,
-    //     &DangerouslyDeleteParams {
-    //         organization_id: 0,
-    //         current_timestamp: 138,
-    //         window_length_ms: 100,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e),
-    // };
+    // read
+    let read_account_requests = match account_requests::read(
+        &mut conn,
+        &ReadParams {
+            organization_id: 2,
+            window_length_ms: 10,
+            current_timestamp: 17,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
 
-    // let read_deleted_people = match account_requests::read(
-    //     &mut conn,
-    //     &ReadParams {
-    //         organization_id: 2,
-    //         window_length_ms: 10,
-    //         current_timestamp: 17,
-    //         limit: 16,
-    //         offset: 0,
-    //     },
-    // ) {
-    //     Ok(ck) => ck,
-    //     Err(e) => return Err(e),
-    // };
+    assert!(1 == read_account_requests.len());
+    assert!(read_account_requests.get(0) == Some(&Ok(account_request_new_window.clone())));
 
-    // assert!(1 == read_deleted_people.len());
+    let _ = match account_requests::dangerously_delete(
+        &mut conn,
+        &DangerouslyDeleteParams {
+            organization_id: 0,
+            current_timestamp: 117,
+            window_length_ms: 100,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
+
+    let read_deleted_account_requests = match account_requests::read(
+        &mut conn,
+        &ReadParams {
+            organization_id: 2,
+            window_length_ms: 100,
+            current_timestamp: 118,
+            limit: 16,
+            offset: 0,
+        },
+    ) {
+        Ok(ck) => ck,
+        Err(e) => return Err(e),
+    };
+
+    assert!(0 == read_deleted_account_requests.len());
 
     Ok(())
 }

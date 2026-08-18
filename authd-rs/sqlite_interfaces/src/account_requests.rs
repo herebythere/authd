@@ -56,7 +56,7 @@ pub fn read(
         WHERE
             organization_id = ?1
             AND
-			?2 < ?3 - updated_at 
+			?2 - updated_at < ?3
         LIMIT
             ?4
         OFFSET
@@ -70,8 +70,8 @@ pub fn read(
     let entry_iter = match stmt.query_map(
         (
             params.organization_id,
-            params.window_length_ms,
             params.current_timestamp,
+            params.window_length_ms,
             params.limit,
             params.offset,
         ),
@@ -108,14 +108,14 @@ pub fn increment_rate_limit(
     let mut stmt = match conn.prepare(
         "
         INSERT INTO account_requests
-            (organization_id, token, contact_kind_id, contact_content, updated_at, completed_at)
+            (organization_id, token, contact_kind_id, contact_content, updated_at)
         VALUES
-            (?1, ?2, ?3, ?4, ?5, NULL)
+            (?1, ?2, ?3, ?4, ?5)
 		ON CONFLICT(contact_kind_id, contact_content) DO UPDATE
             SET
                 token = CASE
                     WHEN
-                        completed_at IS NOT NULL AND
+                        completed_at IS NULL AND
                         updated_at < ?5 AND
                         ?6 < (?5 - updated_at)
                         THEN ?2
@@ -123,7 +123,7 @@ pub fn increment_rate_limit(
                     END,
                 updated_at = CASE
                     WHEN
-                        completed_at IS NOT NULL AND
+                        completed_at IS NULL AND
                         updated_at < ?5 AND
                         ?6 < (?5 - updated_at)
                         THEN ?5

@@ -7,5 +7,5 @@ pub struct AccountRequest {
     pub contact_kind_id: i64,
     pub contact_content: String,
     pub updated_at: i64,
-    pub completed_at: i64,
+    pub completed_at: Option<i64>,
 }
