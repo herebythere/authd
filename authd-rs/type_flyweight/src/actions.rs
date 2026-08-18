@@ -12,7 +12,7 @@ pub struct ActionKind {
 pub struct ActionTicket {
     pub id: i64,
     pub organization_id: i64,
-    pub people_id: Option<i64>,
+    pub people_id: i64,
     pub action_kind_id: i64,
     pub token: i64,
     pub lifetime: i64,

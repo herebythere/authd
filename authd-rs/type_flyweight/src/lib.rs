@@ -1,3 +1,4 @@
+pub mod account_requests;
 pub mod actions;
 pub mod api_keys;
 pub mod contacts;

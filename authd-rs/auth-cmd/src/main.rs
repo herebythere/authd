@@ -19,6 +19,4 @@ authd upkeep (keep db smol)
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
-
-	
 }

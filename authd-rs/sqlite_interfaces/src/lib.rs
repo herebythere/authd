@@ -5,6 +5,7 @@
 // pub mod public_sessions;
 // pub mod sessions;
 
+pub mod account_requests;
 pub mod action_kinds;
 pub mod action_rate_limits;
 pub mod action_tickets;

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct ContactKind {
     pub id: i64,
     pub title: String,
-    pub updated_at: Option<i64>,
+    pub updated_at: i64,
     pub deleted_at: Option<i64>,
 }
 
@@ -15,6 +15,6 @@ pub struct Contact {
     pub people_id: i64,
     pub contact_kind_id: i64,
     pub content: String,
-    pub updated_at: Option<i64>,
+    pub updated_at: i64,
     pub deleted_at: Option<i64>,
 }
