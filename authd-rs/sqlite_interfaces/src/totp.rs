@@ -45,6 +45,7 @@ pub struct CreateParams {
     pub digits: Option<i64>,
 }
 
+// On conflict do nothing? Return Optional Some (new) None (already exists) vs error (code).
 pub fn create(conn: &mut Connection, params: &CreateParams) -> Result<Totp, SqliteInterfaceError> {
     let mut stmt = match conn.prepare(
         "
@@ -237,7 +238,10 @@ pub fn delete(
         "
         UPDATE OR IGNORE totp
             SET deleted_at = ?1
-            WHERE id = ?2
+            WHERE
+                id = ?2
+                AND
+                deleted_at IS NULL
         RETURNING
             *
         ",
@@ -263,13 +267,15 @@ pub fn delete(
     Ok(None)
 }
 
+// DANGEROUSLY DELETE
+// Only "soft deleted" rows are removed.
+// Make sure current_timestamp isn't in the past
 pub struct DangerouslyDeleteParams {
     pub organization_id: i64,
     pub window_length_ms: i64,
     pub current_timestamp: i64,
 }
 
-// dangerously delete
 pub fn dangerously_delete(
     conn: &mut Connection,
     params: &DangerouslyDeleteParams,
@@ -283,6 +289,8 @@ pub fn dangerously_delete(
             AND
 			organization_id = ?1
 			AND
+            deleted_at < ?3
+            AND
 			?2 < (?3 - deleted_at)
         ",
         (
