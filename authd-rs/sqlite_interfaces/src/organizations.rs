@@ -202,6 +202,8 @@ pub fn patch(
                 deleted_at IS NULL
                 AND
                 id = ?3
+                AND
+                updated_at < ?2
         RETURNING
             *
         ",
@@ -243,7 +245,12 @@ pub fn delete(
         "
         UPDATE OR IGNORE organizations
             SET deleted_at = ?1
-            WHERE id = ?2
+            WHERE
+                id = ?2
+                AND
+                updated_at < ?1
+                AND
+                deleted_at IS NULL
         RETURNING
             *
         ",
@@ -285,6 +292,8 @@ pub fn dangerously_delete(
             organizations
         WHERE
             deleted_at IS NOT NULL
+            AND
+            deleted_at < ?2
             AND
 			?1 < (?2 - deleted_at)
         ",

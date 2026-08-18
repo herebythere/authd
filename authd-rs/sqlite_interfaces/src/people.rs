@@ -352,7 +352,7 @@ pub fn dangerously_delete(
             AND
 			organization_id = ?1
 			AND
-            updated_at < ?3
+            deleted_at < ?3
             AND
 			?2 < (?3 - deleted_at)
         ",

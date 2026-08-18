@@ -345,9 +345,9 @@ pub fn dangerously_delete(
 			AND
             deleted_at IS NOT NULL
             AND
-            updated_at < ?3
+            deleted_at < ?3
             AND
-			?2 < (?3 - updated_at)
+			?2 < (?3 - deleted_at)
         ",
         (
             params.organization_id,
