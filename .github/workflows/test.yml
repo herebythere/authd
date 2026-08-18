@@ -1,0 +1,17 @@
+name: Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --manifest-path authd-rs/Cargo.toml
+    - name: Test
+      run: cargo test --manifest-path authd-rs/Cargo.toml
