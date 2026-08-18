@@ -67,12 +67,12 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     assert!(rate_limited_session.prev_window_count == 0);
     assert!(rate_limited_session.window_count == 2);
 
-    // read by people
+    // read by org
     let read_sessions = match action_rate_limits::read(
         &mut conn,
         &ReadParams {
             organization_id: 0,
-            current_timestamp: 26,
+            current_timestamp: 10,
             window_length_ms: 10,
             limit: 16,
             offset: 0,
@@ -85,13 +85,13 @@ fn crud_operations() -> Result<(), SqliteInterfaceError> {
     assert!(1 == read_sessions.len());
     assert!(read_sessions.get(0) == Some(&Ok(rate_limited_session.clone())));
 
-    // read by org
+    // read by persons
     let read_sessions_by_person = match action_rate_limits::read_by_person(
         &mut conn,
         &ReadByPersonParams {
             organization_id: 0,
             people_id: 1,
-            current_timestamp: 26,
+            current_timestamp: 10,
             window_length_ms: 10,
             limit: 16,
             offset: 0,

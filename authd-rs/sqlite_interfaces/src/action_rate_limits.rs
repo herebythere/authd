@@ -242,7 +242,9 @@ pub fn dangerously_delete(
         WHERE
 			organization_id = ?1
 			AND
-			(2 * ?2) < (?3 - updated_at)
+            updated_at < ?3
+            AND
+			(?3 - updated_at) < (2 * ?2)
         ",
         (
             params.organization_id,
